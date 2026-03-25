@@ -1,5 +1,5 @@
 /* ============================================
-   GalleryPage — PhotoDrop "Aura Noir"
+   GalleryPage — JERPRO "Cyber Teal"
    ============================================ */
 
 /* ── Loading State ── */
@@ -84,7 +84,7 @@
 .btn-back:hover {
   border-color: var(--accent);
   color: var(--accent);
-  background: rgba(232, 168, 124, 0.05);
+  background: rgba(0, 212, 170, 0.05);
 }
 
 /* ── Pending State ── */
@@ -135,7 +135,7 @@
 .bg-aura-gallery-1 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(232, 168, 124, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 212, 170, 0.06) 0%, transparent 70%);
   position: fixed;
   top: -100px;
   right: -100px;
@@ -144,7 +144,7 @@
 .bg-aura-gallery-2 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(30, 58, 138, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 209, 255, 0.08) 0%, transparent 70%);
   position: fixed;
   bottom: 0;
   left: -100px;
@@ -434,7 +434,7 @@
 
 .btn-download:hover {
   transform: scale(1.02);
-  box-shadow: 0 0 32px rgba(232, 168, 124, 0.3);
+  box-shadow: 0 0 32px rgba(0, 212, 170, 0.3);
 }
 
 .spin {

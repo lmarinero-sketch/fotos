@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Download, CheckCircle, Clock, XCircle,
-  Aperture, ZoomIn, X, ChevronLeft, ChevronRight, Loader2
+  ZoomIn, X, ChevronLeft, ChevronRight, Loader2
 } from 'lucide-react'
 import { MOCK_ORDERS } from '../data/mockData'
 import './GalleryPage.css'
@@ -114,7 +114,7 @@ const GalleryPage = () => {
     return (
       <div className="gallery-loading">
         <div className="loading-spinner">
-          <Aperture size={40} className="spinner-icon" />
+          <Loader2 size={40} className="spinner-icon" />
         </div>
         <p className="loading-text">Cargando tu galería...</p>
         <p className="loading-code mono">{ticketCode}</p>
