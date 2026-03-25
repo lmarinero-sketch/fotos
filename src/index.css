@@ -1,0 +1,216 @@
+/* ============================================
+   JERPRO — Design System: "Cyber Teal"
+   High-Impact Sports Photography Platform
+   ============================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ── Surfaces ── */
+  --bg-deep: #000000;
+  --bg-surface: #0A0E0F;
+  --bg-container: #0F1517;
+  --bg-container-high: #151C1F;
+  --bg-container-highest: #1C2528;
+  --bg-container-low: #0A0F11;
+  --bg-container-lowest: #050808;
+  --bg-bright: #223033;
+
+  /* ── Accent / Primary (Teal Cyan — JERPRO) ── */
+  --accent: #00D4AA;
+  --accent-light: #00F0C0;
+  --accent-dim: #00B896;
+  --accent-glow: #00E8B8;
+  --accent-tint: #00C4A0;
+  --accent-deep: #008F70;
+
+  /* ── Semantic Colors ── */
+  --success: #00FF88;
+  --error: #FF3131;
+  --error-soft: #ff6b6b;
+  --error-container: #93000a;
+  --warning: #FACC15;
+  --info: #00D1FF;
+
+  /* ── Text ── */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0BEC5;
+  --text-muted: #607D8B;
+  --text-on-accent: #000000;
+
+  /* ── Borders ── */
+  --border-subtle: rgba(0, 212, 170, 0.08);
+  --border-medium: rgba(0, 212, 170, 0.15);
+  --border-active: rgba(0, 212, 170, 0.5);
+  --outline-variant: #1C3A35;
+
+  /* ── Typography ── */
+  --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* ── Spacing Scale ── */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-24: 6rem;
+
+  /* ── Radius ── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.25rem;
+  --radius-full: 9999px;
+
+  /* ── Transitions ── */
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --duration-fast: 150ms;
+  --duration-base: 300ms;
+  --duration-slow: 500ms;
+
+  /* ── Shadows (Teal Tinted) ── */
+  --shadow-ambient: 0 4px 40px rgba(0, 212, 170, 0.05);
+  --shadow-glow: 0 0 60px rgba(0, 212, 170, 0.15);
+  --shadow-card: 0 2px 20px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 0 30px rgba(0, 212, 170, 0.25);
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--bg-deep);
+  color: var(--text-primary);
+  line-height: 1.6;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ── Base Typography ── */
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--text-primary);
+  text-transform: uppercase;
+}
+
+h1 { font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 900; }
+h2 { font-size: clamp(1.75rem, 4vw, 3rem); }
+h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
+h4 { font-size: 1.125rem; }
+
+p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+a {
+  color: var(--accent-light);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--accent-glow);
+}
+
+/* ── Utility Classes ── */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+.mono { font-family: var(--font-mono); }
+.text-accent { color: var(--accent); }
+.text-muted { color: var(--text-muted); }
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.1); }
+  50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.3); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes teal-pulse {
+  0%, 100% { opacity: 0.15; }
+  50% { opacity: 0.25; }
+}
+
+.animate-fade-in-up { animation: fadeInUp 0.7s var(--ease-out) both; }
+.animate-fade-in { animation: fadeIn 0.5s var(--ease-out) both; }
+
+/* Stagger children */
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 100ms; }
+.stagger > *:nth-child(3) { animation-delay: 200ms; }
+.stagger > *:nth-child(4) { animation-delay: 300ms; }
+.stagger > *:nth-child(5) { animation-delay: 400ms; }
+.stagger > *:nth-child(6) { animation-delay: 500ms; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: var(--bg-container-highest); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Media Queries ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .container { padding: 0 var(--space-4); }
+}

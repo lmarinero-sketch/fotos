@@ -1,0 +1,96 @@
+// Mock data for development — replace with Supabase queries
+
+const SAMPLE_PHOTOS = [
+  {
+    id: '1',
+    name: 'IMG_0247.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 4200000,
+  },
+  {
+    id: '2',
+    name: 'IMG_0312.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 3800000,
+  },
+  {
+    id: '3',
+    name: 'IMG_0458.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 5100000,
+  },
+  {
+    id: '4',
+    name: 'IMG_0521.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 4600000,
+  },
+  {
+    id: '5',
+    name: 'IMG_0634.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 3900000,
+  },
+  {
+    id: '6',
+    name: 'IMG_0789.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 4100000,
+  },
+  {
+    id: '7',
+    name: 'IMG_0892.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1591604466107-ec97de577aff?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 5300000,
+  },
+  {
+    id: '8',
+    name: 'IMG_0945.jpg',
+    thumbnail: 'https://images.unsplash.com/photo-1460978812857-470ed1c77af0?w=600&h=450&fit=crop',
+    driveUrl: '#',
+    fileSize: 4800000,
+  },
+]
+
+export const MOCK_ORDERS = {
+  'PD-A7X9K2': {
+    ticketCode: 'PD-A7X9K2',
+    eventName: 'Boda Ana & Carlos',
+    clientPhone: '+5491155550001',
+    photographerPhone: '+5491155550002',
+    status: 'approved',
+    createdAt: '2026-03-24T18:30:00Z',
+    approvedAt: '2026-03-24T19:15:00Z',
+    downloadCount: 0,
+    photos: SAMPLE_PHOTOS,
+  },
+  'PD-B3M7N1': {
+    ticketCode: 'PD-B3M7N1',
+    eventName: '15 años de Valentina',
+    clientPhone: '+5491155550003',
+    photographerPhone: '+5491155550002',
+    status: 'pending',
+    createdAt: '2026-03-24T20:00:00Z',
+    approvedAt: null,
+    downloadCount: 0,
+    photos: SAMPLE_PHOTOS.slice(0, 5),
+  },
+  'PD-K9P2L4': {
+    ticketCode: 'PD-K9P2L4',
+    eventName: 'Cumple de 1 — Thiago',
+    clientPhone: '+5491155550005',
+    photographerPhone: '+5491155550002',
+    status: 'approved',
+    createdAt: '2026-03-23T14:00:00Z',
+    approvedAt: '2026-03-23T16:00:00Z',
+    downloadCount: 2,
+    photos: SAMPLE_PHOTOS.slice(2, 8),
+  },
+}
