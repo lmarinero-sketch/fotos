@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Camera, ArrowRight, Search, Image, Download, Aperture } from 'lucide-react'
+import { Camera, ArrowRight, Search, Image, Download } from 'lucide-react'
 import './LandingPage.css'
 
 const LandingPage = () => {
@@ -68,8 +68,8 @@ const LandingPage = () => {
       {/* Floating Nav */}
       <nav className="floating-nav">
         <div className="nav-brand">
-          <Aperture size={20} className="nav-icon" />
-          <span className="nav-logo">PhotoDrop</span>
+          <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="nav-logo-img" />
+          <span className="nav-logo">JERPRO</span>
         </div>
       </nav>
 
@@ -78,12 +78,12 @@ const LandingPage = () => {
         <div className="container hero-content">
           <div className="hero-badge animate-fade-in-up">
             <Camera size={14} />
-            <span>Galería de Eventos Premium</span>
+            <span>Fotografía Profesional de Eventos</span>
           </div>
 
           <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            Tus momentos,<br />
-            <span className="hero-title-accent">listos para vos</span>
+            Encontrá tu foto,<br />
+            <span className="hero-title-accent">reviví tu momento</span>
           </h1>
 
           <p className="hero-subtitle animate-fade-in-up" style={{ animationDelay: '200ms' }}>
@@ -185,15 +185,15 @@ const LandingPage = () => {
       <footer className="footer">
         <div className="container footer-content">
           <div className="footer-brand">
-            <Aperture size={18} className="nav-icon" />
-            <span>PhotoDrop</span>
+            <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="nav-logo-img" />
+            <span>JERPRO</span>
           </div>
           <div className="footer-links">
             <a href="#" className="footer-link">Términos</a>
             <a href="#" className="footer-link">Privacidad</a>
             <a href="#" className="footer-link">Contacto</a>
           </div>
-          <p className="footer-copy">© 2026 PhotoDrop. Todos los derechos reservados.</p>
+          <p className="footer-copy">© 2026 JERPRO. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>

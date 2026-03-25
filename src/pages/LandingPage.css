@@ -1,5 +1,5 @@
 /* ============================================
-   LandingPage — PhotoDrop "Aura Noir"
+   LandingPage — JERPRO "Cyber Teal"
    ============================================ */
 
 /* ── Camera Flash Overlay ── */
@@ -35,7 +35,7 @@
 .bg-aura-1 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(232, 168, 124, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(0, 212, 170, 0.08) 0%, transparent 70%);
   top: -200px;
   right: -100px;
 }
@@ -81,12 +81,18 @@
   color: var(--accent);
 }
 
+.nav-logo-img {
+  height: 24px;
+  filter: drop-shadow(0 0 8px rgba(0, 212, 170, 0.2));
+}
+
 .nav-logo {
   font-family: var(--font-display);
-  font-weight: 700;
+  font-weight: 800;
   font-size: 1rem;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
 }
 
 /* ── Hero Section ── */
@@ -112,7 +118,7 @@
   gap: var(--space-2);
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-full);
-  background: rgba(232, 168, 124, 0.08);
+  background: rgba(0, 212, 170, 0.08);
   color: var(--accent);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -160,7 +166,7 @@
 
 .ticket-form.focused .ticket-input-wrapper {
   border-color: var(--border-active);
-  box-shadow: 0 0 0 3px rgba(232, 168, 124, 0.08),
+  box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.08),
               var(--shadow-glow);
 }
 
@@ -210,7 +216,7 @@
 
 .ticket-submit:hover:not(:disabled) {
   transform: scale(1.05);
-  box-shadow: 0 0 24px rgba(232, 168, 124, 0.3);
+  box-shadow: 0 0 24px rgba(0, 212, 170, 0.3);
 }
 
 .ticket-submit:disabled {
@@ -238,7 +244,7 @@
   width: 300px;
   height: 300px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(232, 168, 124, 0.06) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(0, 212, 170, 0.06) 0%, transparent 60%);
   top: 30%;
   left: 50%;
   transform: translateX(-50%);
@@ -306,7 +312,7 @@
   width: 56px;
   height: 56px;
   border-radius: var(--radius-xl);
-  background: rgba(232, 168, 124, 0.08);
+  background: rgba(0, 212, 170, 0.08);
   color: var(--accent);
   margin-bottom: var(--space-6);
 }
