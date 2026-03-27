@@ -249,7 +249,8 @@ Deno.serve(async (req) => {
       `📥 *PARA NO PERDER CALIDAD:*\n` +
       `Descargalas en su resolución original (HD sin la compresión de WhatsApp) desde tu galería privada:\n\n` +
       `👉 https://jerpro.vercel.app/${ticket_code}\n\n` +
-      `¡Que las disfrutes! ✨`
+      `¡Que las disfrutes! ✨\n\n` +
+      `Automatización hecha por Grow Labs, visitanos en www.growlabs.lat`
     )
 
     // ── 8. Update status ──

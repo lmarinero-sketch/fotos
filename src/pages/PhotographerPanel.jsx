@@ -119,14 +119,36 @@ const PhotographerPanel = () => {
       .select('*')
       .order('created_at', { ascending: false })
 
+    // Auto-sync photo count for manual uploads (test2 bug fix)
+    if (data && data.length > 0) {
+      setTimeout(async () => {
+        const updated = [...data]
+        let changed = false
+        for (let idx = 0; idx < updated.length; idx++) {
+          const ev = updated[idx]
+          if (ev.photo_count === 0 || !ev.photo_count) {
+             const { data: files } = await supabase.storage.from('photos').list(`events/${ev.slug}`, { limit: 1000 })
+             const realCount = (files || []).filter(f => f.name !== '.emptyFolderPlaceholder').length
+             if (realCount > 0 && ev.photo_count !== realCount) {
+                await supabase.from('events').update({ photo_count: realCount }).eq('id', ev.id)
+                updated[idx].photo_count = realCount
+                changed = true
+             }
+          }
+        }
+        if (changed) setEvents(updated)
+      }, 500)
+    }
+
     setEvents(data || [])
   }
 
   const loadDashboardData = async () => {
-    // Orders / Sales data
+    // Orders / Sales data with order_photos mapped
     const { data: sales } = await supabase
       .from('orders')
-      .select('event_name, total_price, status')
+      .select('*, order_photos(*)')
+      .order('created_at', { ascending: false })
       
     // Errors data
     const { data: errorsList } = await supabase
@@ -397,6 +419,9 @@ const PhotographerPanel = () => {
             <button className={`tab-btn ${dashboardTab === 'events' ? 'active' : ''}`} onClick={() => { setDashboardTab('events'); setIsSidebarOpen(false) }}>
               <Camera size={18} /> Eventos
             </button>
+            <button className={`tab-btn ${dashboardTab === 'ventas' ? 'active' : ''}`} onClick={() => { setDashboardTab('ventas'); setIsSidebarOpen(false) }}>
+              <ShoppingCart size={18} /> Ventas
+            </button>
             <button className={`tab-btn ${dashboardTab === 'metrics' ? 'active' : ''}`} onClick={() => { setDashboardTab('metrics'); setIsSidebarOpen(false) }}>
               <BarChart3 size={18} /> Métricas
             </button>
@@ -498,6 +523,57 @@ const PhotographerPanel = () => {
                 ))}
               </div>
             )}
+            </div>
+          )}
+
+          {/* ── VENTAS TAB ── */}
+          {dashboardTab === 'ventas' && (
+            <div className="panel-card w-full max-w-4xl mx-auto">
+              <h2 className="flex items-center gap-3 text-2xl font-black uppercase tracking-wider mb-6 text-white">
+                <ShoppingCart className="text-[#00E5FF]" /> Historial de Ventas
+              </h2>
+              {globalMetrics.length === 0 ? (
+                <div className="empty-state">
+                  <p>Aún no hay ventas registradas.</p>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {globalMetrics.map((order) => (
+                    <details key={order.id} className="group bg-[#161B22]/60 backdrop-blur-md border border-white/5 rounded-2xl overflow-hidden cursor-pointer shadow-lg hover:border-[#00E5FF]/30 transition-all duration-300">
+                      <summary className="flex flex-col md:flex-row md:items-center justify-between p-5 list-none focus:outline-none">
+                        <div className="flex items-center gap-4">
+                           <div className={`w-10 h-10 rounded-full flex items-center justify-center ${order.status === 'delivered' || order.status === 'approved' ? 'bg-[#00E5FF]/10 text-[#00E5FF]' : 'bg-yellow-400/10 text-yellow-400'}`}>
+                             <Check size={20} />
+                           </div>
+                           <div className="flex flex-col">
+                             <span className="font-bold text-lg text-white">{order.event_name} <span className="text-gray-400 text-sm ml-2 font-mono">({order.ticket_code})</span></span>
+                             <span className="text-sm text-gray-400">{new Date(order.created_at).toLocaleString('es-AR')} • Tel: {order.client_phone}</span>
+                           </div>
+                        </div>
+                        <div className="flex items-center gap-6 mt-4 md:mt-0">
+                           <div className="flex flex-col items-end">
+                             <span className="text-xs uppercase tracking-widest text-gray-500 font-bold mb-1">{order.status === 'delivered' ? 'Pagado' : 'Pendiente'}</span>
+                             <span className="text-xl font-black text-[#00E5FF]">${(order.total_price || 0).toLocaleString('es-AR')}</span>
+                           </div>
+                           <ChevronRight className="transform transition-transform group-open:rotate-90 text-gray-500" />
+                        </div>
+                      </summary>
+                      <div className="p-5 origin-top animate-fade-in border-t border-white/5 bg-black/40">
+                        <h4 className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider flex items-center justify-between">
+                          Fotos compradas ({order.order_photos?.length || 0})
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {order.order_photos && order.order_photos.map(p => (
+                            <span key={p.id} className="text-xs bg-white/5 border border-white/5 px-3 py-1.5 rounded-md text-gray-300 font-mono shadow-inner hover:bg-white/10 transition-colors">
+                              {p.photo_name}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    </details>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
