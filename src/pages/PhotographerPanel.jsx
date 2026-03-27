@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import {
   Upload, FolderPlus, Image, Check, AlertCircle,
   Loader2, X, LogOut, Plus, ChevronRight, Camera, Trash2, ArrowLeft,
-  ShoppingCart, Send, BarChart3, AlertTriangle, TrendingUp, Bug
+  ShoppingCart, Send, BarChart3, AlertTriangle, TrendingUp, Bug, Menu
 } from 'lucide-react'
 import './PhotographerPanel.css'
 
@@ -42,6 +42,7 @@ const PhotographerPanel = () => {
   const [view, setView] = useState('events') // 'events' | 'workspace'
   const [panelTab, setPanelTab] = useState('upload') // 'upload' | 'orders'
   const [dashboardTab, setDashboardTab] = useState('events') // 'events' | 'metrics' | 'errors'
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [events, setEvents] = useState([])
   const [globalMetrics, setGlobalMetrics] = useState([])
   const [systemErrors, setSystemErrors] = useState([])
@@ -375,27 +376,40 @@ const PhotographerPanel = () => {
   // ────────────────────────────────
   if (view === 'events') {
     return (
-      <div className="panel-container">
-        <header className="panel-header dashboard-header">
+      <div className={`panel-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+        <button className="sidebar-mobile-toggle" onClick={() => setIsSidebarOpen(true)}>
+          <Menu size={24} />
+        </button>
+
+        {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+
+        <aside className={`panel-sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <div className="panel-brand">
             <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="brand-logo" />
-            <span className="brand-tag">Fotógrafo Central</span>
+            <div className="brand-badge-row">
+              <span className="brand-tag">Fotógrafo Central</span>
+              <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
+                <X size={20} />
+              </button>
+            </div>
           </div>
           <div className="event-tabs">
-            <button className={`tab-btn ${dashboardTab === 'events' ? 'active' : ''}`} onClick={() => setDashboardTab('events')}>
-              <Camera size={14} /> Eventos
+            <button className={`tab-btn ${dashboardTab === 'events' ? 'active' : ''}`} onClick={() => { setDashboardTab('events'); setIsSidebarOpen(false) }}>
+              <Camera size={18} /> Eventos
             </button>
-            <button className={`tab-btn ${dashboardTab === 'metrics' ? 'active' : ''}`} onClick={() => setDashboardTab('metrics')}>
-              <BarChart3 size={14} /> Métricas
+            <button className={`tab-btn ${dashboardTab === 'metrics' ? 'active' : ''}`} onClick={() => { setDashboardTab('metrics'); setIsSidebarOpen(false) }}>
+              <BarChart3 size={18} /> Métricas
             </button>
-            <button className={`tab-btn ${dashboardTab === 'errors' ? 'active' : ''}`} onClick={() => setDashboardTab('errors')}>
-              <Bug size={14} /> Errores
+            <button className={`tab-btn ${dashboardTab === 'errors' ? 'active' : ''}`} onClick={() => { setDashboardTab('errors'); setIsSidebarOpen(false) }}>
+              <Bug size={18} /> Errores
             </button>
           </div>
-          <button className="btn-logout" onClick={handleLogout} aria-label="Cerrar sesión">
-            <LogOut size={18} />
-          </button>
-        </header>
+          <div className="sidebar-footer">
+            <button className="btn-logout-sidebar" onClick={handleLogout} aria-label="Cerrar sesión">
+              <LogOut size={18} /> Cerrar Sesión
+            </button>
+          </div>
+        </aside>
 
         <main className="panel-main">
           {dashboardTab === 'events' && (

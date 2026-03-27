@@ -42,18 +42,18 @@ const LandingPage = () => {
   const steps = [
     {
       icon: <Search size={28} />,
-      title: 'Validación Segura',
-      description: 'Ingresa tu Token único recbido vía WhatsApp para autenticar tu acceso.'
+      title: '📸 Cobertura Premium',
+      description: 'Encontrá tus fotos capturadas por profesionales en plena acción para revivir cada kilómetro.'
     },
     {
       icon: <Image size={28} />,
-      title: 'Renderizado Alta Calidad',
-      description: 'Explora tus fotografías capturadas con nuestro motor visual ultra rápido.'
+      title: '⚡ Calidad Original (HD)',
+      description: 'Descargá tus fotos sin compresión, listas para imprimir en la más alta resolución.'
     },
     {
       icon: <Download size={28} />,
-      title: 'Extracción Total',
-      description: 'Descarga todas las fotos en su máxima resolución directamente a tu dispositivo.'
+      title: '📱 Acceso Inmediato',
+      description: 'Llevate el recuerdo de tu esfuerzo y pasión instantáneamente directo a tu celular.'
     }
   ]
 
@@ -70,7 +70,6 @@ const LandingPage = () => {
       <nav className="floating-nav">
         <div className="nav-brand">
           <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="nav-logo-img" />
-          <span className="nav-logo">JERPRO</span>
         </div>
       </nav>
 
@@ -78,16 +77,16 @@ const LandingPage = () => {
         <div className="container hero-content">
           <div className="hero-badge animate-fade-in-up">
             <ShieldCheck size={14} />
-            <span>ACCESO SEGURO DE FOTOGRAFÍA</span>
+            <span>🏁 GALERÍA OFICIAL DE LA CARRERA</span>
           </div>
 
           <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            RECUPERA TU <br />
-            <span className="hero-title-accent">EVENTO DIGITAL</span>
+            REVIVÍ LA <br />
+            <span className="hero-title-accent">ADRENALINA</span>
           </h1>
 
           <p className="hero-subtitle animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            Inicializa el terminal con tu código único de 6 dígitos.
+            La carrera terminó, pero la gloria es para siempre. Ingresá tu código para descargar tus momentos épicos en alta resolución.
           </p>
 
           <form
@@ -96,7 +95,7 @@ const LandingPage = () => {
             onSubmit={handleSubmit}
           >
             <div className="terminal-screen">
-              <div className="terminal-prefix">ROOT@JERPRO:~#</div>
+              <div className="terminal-prefix">TICKET_ID~#</div>
               <input
                 ref={inputRef}
                 type="text"
@@ -122,6 +121,9 @@ const LandingPage = () => {
             {error && <div className="terminal-error">&gt;_ ERROR: {error}</div>}
           </form>
 
+          <div className="hero-brand-below animate-fade-in-up" style={{ animationDelay: '400ms', marginTop: '3rem', display: 'flex', justifyContent: 'center' }}>
+            <img src="/logo_creadores_jerpro.png" alt="JERPRO" style={{ height: '32px', opacity: 0.8, filter: 'drop-shadow(0 0 12px rgba(0, 229, 255, 0.3))' }} />
+          </div>
         </div>
       </section>
 
