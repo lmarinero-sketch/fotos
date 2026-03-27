@@ -5,7 +5,12 @@ import {
   ZoomIn, X, ChevronLeft, ChevronRight, Loader2
 } from 'lucide-react'
 import { MOCK_ORDERS } from '../data/mockData'
+import { createClient } from '@supabase/supabase-js'
 import './GalleryPage.css'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 const STATUS_CONFIG = {
   approved: { label: 'Aprobado', icon: CheckCircle, className: 'status-approved' },
@@ -27,14 +32,41 @@ const GalleryPage = () => {
   useEffect(() => {
     const fetchOrder = async () => {
       setLoading(true)
-      // Simulate API call — replace with Supabase call
-      await new Promise(resolve => setTimeout(resolve, 1200))
+      
+      const { data: orderData, error: fetchError } = await supabase
+        .from('orders')
+        .select(`
+          id,
+          ticket_code,
+          event_name,
+          status,
+          order_photos (
+            id,
+            photo_name,
+            storage_url
+          )
+        `)
+        .eq('ticket_code', ticketCode?.toUpperCase())
+        .single()
 
-      const mockOrder = MOCK_ORDERS[ticketCode?.toUpperCase()]
-      if (mockOrder) {
-        setOrder(mockOrder)
+      if (fetchError || !orderData) {
+        setError('No encontramos este Ticket o el pago aún no fue procesado. Verificá tu comprobante.')
       } else {
-        setError('No encontramos una galería con ese código. Verificá que sea correcto.')
+        const orderPhotos = (orderData.order_photos || [])
+          .filter(p => p.storage_url) // only map ones that are ready in storage
+          .map(p => ({
+            id: p.id,
+            name: p.photo_name,
+            thumbnail: p.storage_url,
+            url: p.storage_url
+          }))
+        
+        setOrder({
+          id: orderData.ticket_code,
+          eventName: orderData.event_name,
+          status: (orderData.status === 'awaiting_payment' || orderData.status === 'pending') ? 'pending' : 'approved',
+          photos: orderPhotos
+        })
       }
       setLoading(false)
     }
@@ -67,15 +99,49 @@ const GalleryPage = () => {
     setDownloading(true)
     setDownloadProgress(0)
 
-    // Simulate download progress
-    const totalSteps = 20
-    for (let i = 1; i <= totalSteps; i++) {
-      await new Promise(resolve => setTimeout(resolve, 100))
-      setDownloadProgress((i / totalSteps) * 100)
-    }
+    try {
+      const photosToDownload = selectedPhotos.size > 0 
+        ? order.photos.filter(p => selectedPhotos.has(p.id))
+        : order.photos
 
-    setDownloading(false)
-    setDownloadProgress(0)
+      const totalSteps = photosToDownload.length
+      let done = 0
+
+      for (const photo of photosToDownload) {
+        try {
+          // Fetch image as blob
+          const response = await fetch(photo.url)
+          if (!response.ok) throw new Error('File fetch failed')
+          
+          const blob = await response.blob()
+          const url = window.URL.createObjectURL(blob)
+          
+          // Trigger download
+          const a = document.createElement('a')
+          a.style.display = 'none'
+          a.href = url
+          a.download = photo.name || 'foto.jpg'
+          document.body.appendChild(a)
+          a.click()
+          
+          window.URL.revokeObjectURL(url)
+          a.remove()
+        } catch (e) {
+          console.error('Error downloading photo:', photo.name, e)
+        }
+        
+        done++
+        setDownloadProgress((done / totalSteps) * 100)
+        // Small delay so browser handles downloads properly
+        await new Promise(r => setTimeout(r, 600))
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Hubo un error en las descargas")
+    } finally {
+      setDownloading(false)
+      setDownloadProgress(0)
+    }
   }
 
   const openLightbox = useCallback((index) => {
@@ -129,7 +195,7 @@ const GalleryPage = () => {
         <div className="error-icon-wrapper">
           <XCircle size={48} />
         </div>
-        <h2>Galería no encontrada</h2>
+        <h2>Código No Encontrado o Inválido</h2>
         <p>{error}</p>
         <button className="btn-back" onClick={() => navigate('/')}>
           <ArrowLeft size={18} />
