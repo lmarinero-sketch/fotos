@@ -245,7 +245,11 @@ Deno.serve(async (req) => {
     await delay(2000)
     await sendWhatsAppMessage(
       order.client_phone,
-      `✅ ¡Listo! Te envié ${sentCount} foto${sentCount > 1 ? 's' : ''}.\n¡Disfrutalas! ✨`
+      `✅ ¡Listo! Te envié ${sentCount} foto${sentCount > 1 ? 's' : ''} por acá para que las tengas a mano.\n\n` +
+      `📥 *PARA NO PERDER CALIDAD:*\n` +
+      `Descargalas en su resolución original (HD sin la comp compresión de WhatsApp) desde tu galería privada:\n\n` +
+      `👉 https://misfotos.click/${ticket_code}\n\n` +
+      `¡Que las disfrutes! ✨`
     )
 
     // ── 8. Update status ──
