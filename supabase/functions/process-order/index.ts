@@ -153,6 +153,13 @@ Deno.serve(async (req) => {
     const { eventName, photos } = parseClientMessage(rawMessage)
 
     if (!eventName || photos.length === 0) {
+      const sb = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
+      await sb.from('system_errors').insert({
+        error_source: 'process-order',
+        error_message: 'Parse error: Could not identify event name or photos',
+        payload: { rawMessage, parsedEvent: eventName, parsedPhotos: photos }
+      })
+
       return new Response(
         JSON.stringify({ error: 'Could not parse event name or photos from message', rawMessage }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -165,9 +172,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     )
 
+    // ── Get event pricing from DB ──
+    const { data: eventData } = await supabase
+      .from('events')
+      .select('price_per_photo, price_pack')
+      .ilike('name', eventName)
+      .limit(1)
+      .single()
+
+    const pricePerPhoto = eventData?.price_per_photo || parseInt(Deno.env.get('PRICE_PER_PHOTO') || '3000')
+    const pricePack = eventData?.price_pack || 15000
+
+    const costIndividual = photos.length * pricePerPhoto
+    const totalPrice = costIndividual > pricePack ? pricePack : costIndividual
+    
     const ticketCode = generateTicketCode()
-    const pricePerPhoto = parseInt(Deno.env.get('PRICE_PER_PHOTO') || '3000')
-    const totalPrice = photos.length * pricePerPhoto
 
     // ── Create order ──
     const { data: order, error: orderError } = await supabase
@@ -176,6 +195,7 @@ Deno.serve(async (req) => {
         ticket_code: ticketCode,
         event_name: eventName,
         client_phone: clientPhone,
+        client_name: clientName,
         photographer_phone: Deno.env.get('PHOTOGRAPHER_PHONE'),
         status: 'awaiting_payment',
         total_price: totalPrice,
@@ -208,9 +228,11 @@ Deno.serve(async (req) => {
       `📋 *Pedido: ${ticketCode}*\n` +
       `🎪 Evento: ${eventName}\n` +
       `📷 Fotos: ${photos.length}\n\n` +
-      `*Te detallo los precios según la cantidad de fotos que elijas:*\n` +
-      `👉 ${photos.length} foto${photos.length > 1 ? 's' : ''}: $${formatPrice(pricePerPhoto)} c/u\n` +
-      `💰 *Total: $${formatPrice(totalPrice)}*\n\n` +
+      `*Te detallo los precios del evento:*\n` +
+      `👉 Individual: $${formatPrice(pricePerPhoto)} c/u\n` +
+      `🎁 *Pack completo:* $${formatPrice(pricePack)}\n\n` +
+      `Llevas ${photos.length} foto${photos.length > 1 ? 's' : ''}.\n` +
+      `💰 *Total a transferir: $${formatPrice(totalPrice)}*\n\n` +
       `💳 *Este es el CBU para hacer la transferencia:*\n\n` +
       `CBU: ${paymentCBU}\n` +
       `Alias: ${paymentAlias}\n` +
@@ -251,6 +273,19 @@ Deno.serve(async (req) => {
     )
   } catch (error) {
     console.error('process-order error:', error)
+    
+    // Attempt to log critical error
+    try {
+      if (Deno.env.get('SUPABASE_URL') && Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+        const sb = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
+        await sb.from('system_errors').insert({
+          error_source: 'process-order (catch)',
+          error_message: error.message,
+          payload: { stack: error.stack }
+        })
+      }
+    } catch (_) {}
+
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
