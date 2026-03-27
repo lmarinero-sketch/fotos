@@ -153,6 +153,12 @@ a:hover {
   padding: 0 var(--space-6);
 }
 
+@media (max-width: 768px) {
+  .container {
+    padding: 0 var(--space-4);
+  }
+}
+
 .mono { font-family: var(--font-mono); }
 .text-accent { color: var(--accent); }
 .text-muted { color: var(--text-muted); }
