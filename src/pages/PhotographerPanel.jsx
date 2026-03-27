@@ -461,6 +461,11 @@ const PhotographerPanel = () => {
                     <div className="file-info">
                       <span className="file-name">{file.name}</span>
                       <span className="file-size">{formatSize(file.size)}</span>
+                      {status === 'uploading' && (
+                        <div className="cyber-progress-bar">
+                          <div className="cyber-progress-fill" />
+                        </div>
+                      )}
                     </div>
                     <div className="file-status">
                       {status === 'uploading' && <Loader2 size={16} className="spin" />}

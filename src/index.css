@@ -16,13 +16,13 @@
   --bg-container-lowest: #050808;
   --bg-bright: #223033;
 
-  /* ── Accent / Primary (Teal Cyan — JERPRO) ── */
-  --accent: #00D4AA;
-  --accent-light: #00F0C0;
-  --accent-dim: #00B896;
-  --accent-glow: #00E8B8;
-  --accent-tint: #00C4A0;
-  --accent-deep: #008F70;
+  /* ── Accent / Primary (Cyan — JERPRO) ── */
+  --accent: #00E5FF;
+  --accent-light: #80F2FF;
+  --accent-dim: #00B8CC;
+  --accent-glow: #00FFFF;
+  --accent-tint: #40ECFF;
+  --accent-deep: #008999;
 
   /* ── Semantic Colors ── */
   --success: #00FF88;
@@ -39,9 +39,9 @@
   --text-on-accent: #000000;
 
   /* ── Borders ── */
-  --border-subtle: rgba(0, 212, 170, 0.08);
-  --border-medium: rgba(0, 212, 170, 0.15);
-  --border-active: rgba(0, 212, 170, 0.5);
+  --border-subtle: rgba(0, 229, 255, 0.12);
+  --border-medium: rgba(0, 229, 255, 0.25);
+  --border-active: rgba(0, 229, 255, 0.6);
   --outline-variant: #1C3A35;
 
   /* ── Typography ── */
@@ -78,11 +78,11 @@
   --duration-base: 300ms;
   --duration-slow: 500ms;
 
-  /* ── Shadows (Teal Tinted) ── */
-  --shadow-ambient: 0 4px 40px rgba(0, 212, 170, 0.05);
-  --shadow-glow: 0 0 60px rgba(0, 212, 170, 0.15);
-  --shadow-card: 0 2px 20px rgba(0, 0, 0, 0.5);
-  --shadow-accent: 0 0 30px rgba(0, 212, 170, 0.25);
+  /* ── Shadows (Cyan Tinted) ── */
+  --shadow-ambient: 0 4px 40px rgba(0, 229, 255, 0.08);
+  --shadow-glow: 0 0 60px rgba(0, 229, 255, 0.2);
+  --shadow-card: 0 2px 20px rgba(0, 0, 0, 0.6);
+  --shadow-accent: 0 0 30px rgba(0, 229, 255, 0.35);
 }
 
 /* ── Reset ── */
@@ -162,8 +162,8 @@ a:hover {
 }
 
 @keyframes pulse-glow {
-  0%, 100% { box-shadow: 0 0 20px rgba(0, 212, 170, 0.1); }
-  50% { box-shadow: 0 0 40px rgba(0, 212, 170, 0.3); }
+  0%, 100% { box-shadow: 0 0 20px rgba(0, 229, 255, 0.15); }
+  50% { box-shadow: 0 0 50px rgba(0, 229, 255, 0.4); }
 }
 
 @keyframes shimmer {
