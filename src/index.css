@@ -101,6 +101,13 @@ html {
 body {
   font-family: var(--font-body);
   background-color: var(--bg-deep);
+  background-image: 
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.95)),
+    linear-gradient(to right, rgba(0, 229, 255, 0.15), rgba(0, 229, 255, 0.05)),
+    url('/AND_0049.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.6;
   overflow-x: hidden;
