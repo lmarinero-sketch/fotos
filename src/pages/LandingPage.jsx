@@ -147,7 +147,10 @@ const LandingPage = () => {
       <footer className="footer animate-fade-in">
         <div className="container footer-content">
           <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="footer-logo-img" />
-          <p className="footer-copy">© 2026 JERPRO SYSTEM. ENCRYPTED CLOUD PORTAL.</p>
+          <p className="footer-copy">© {new Date().getFullYear()} JERPRO Fotos.</p>
+          <p className="footer-copy" style={{ marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>
+            Hecho por <a href="https://www.growlabs.lat" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none', fontWeight: 'bold' }}>GrowLabs</a>
+          </p>
         </div>
       </footer>
     </div>
