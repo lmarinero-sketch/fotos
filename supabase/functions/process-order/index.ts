@@ -105,37 +105,62 @@ Deno.serve(async (req) => {
 
     // ── ROUTER: Detect message type ──
 
-    // 1) "Todo ok PD-XXXX" → Approve order (ONLY if the entire message is just this)
-    const approveMatch = cleanMsg.match(/^todo\s+ok\s+(PD-\d{4})$/i)
+    // 1) "Todo ok PD-XXXX" → Approve order (more permissive regex)
+    const approveMatch = cleanMsg.match(/todo\s*ok\s*(pd-\d{4})/i)
     if (approveMatch) {
       const ticketCode = approveMatch[1].toUpperCase()
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!
 
-      // Call approve-order edge function internally
-      const approveRes = await fetch(
-        `${supabaseUrl}/functions/v1/approve-order`,
-        {
-          method: 'POST',
-          headers: { 
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
-          },
-          body: JSON.stringify({
-            ticket_code: ticketCode,
-            photographer_phone: clientPhone,
-          }),
+      // Send a quick acknowledgment back to the user instantly so they know we caught it
+      await sendWhatsAppMessage(clientPhone, `⏳ Procesando entrega del ticket ${ticketCode}...`)
+
+      try {
+        // Call approve-order edge function internally
+        const approveRes = await fetch(
+          `${supabaseUrl}/functions/v1/approve-order`,
+          {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`,
+            },
+            body: JSON.stringify({
+              ticket_code: ticketCode,
+              photographer_phone: clientPhone,
+            }),
+          }
+        )
+
+        if (!approveRes.ok) {
+           throw new Error(`approve-order returned ${approveRes.status}: ${await approveRes.text()}`)
         }
-      )
-      const approveResult = await approveRes.json()
-      return new Response(
-        JSON.stringify({ routed: 'approve-order', ticket_code: ticketCode, ...approveResult }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+
+        const approveResult = await approveRes.json()
+        return new Response(
+          JSON.stringify({ routed: 'approve-order', ticket_code: ticketCode, ...approveResult }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      } catch (err) {
+        // Log into system_errors
+        const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+        await sb.from('system_errors').insert({
+          error_source: 'process-order-approve-call',
+          error_message: err.message,
+          payload: { ticketCode, clientPhone }
+        })
+
+        await sendWhatsAppMessage(clientPhone, `❌ Error interno al enviar las fotos. Contactá a soporte o aprobalo desde el Panel Web.`)
+
+        return new Response(
+          JSON.stringify({ error: err.message }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
     }
 
     // 2) "Hola! Estoy en misfotos.click..." → New order
-    const triggerPhrase = 'Hola! Estoy en misfotos.click'
-    if (!cleanMsg.startsWith(triggerPhrase)) {
+    const triggerPhrase = 'Hola! Estoy'
+    if (!cleanMsg.startsWith(triggerPhrase) && !cleanMsg.toLowerCase().includes('misfotos.click')) {
       return new Response(
         JSON.stringify({ skip: true, reason: 'Message does not match any trigger' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

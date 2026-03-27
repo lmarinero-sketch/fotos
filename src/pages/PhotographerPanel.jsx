@@ -657,28 +657,47 @@ const PhotographerPanel = () => {
   // UPLOAD VIEW
   // ────────────────────────────────
   return (
-    <div className="panel-container">
-      <header className="panel-header">
-        <button className="btn-back" onClick={() => { setView('events'); setFiles([]); setUploadProgress({}) }}>
-          <ArrowLeft size={18} />
-        </button>
+    <div className={`panel-container ${isSidebarOpen ? 'sidebar-open' : ''}`}>
+      <button className="sidebar-mobile-toggle" onClick={() => setIsSidebarOpen(true)}>
+        <Menu size={24} />
+      </button>
+
+      {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
+
+      <aside className={`panel-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="panel-brand">
-          <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="brand-logo" style={{ marginRight: '8px' }} />
-          <span className="event-title-header">{selectedEvent?.name}</span>
-          <span className="brand-tag">{selectedEvent?.photo_count || 0} fotos</span>
+          <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="brand-logo" />
+          <div className="brand-badge-row">
+            <span className="brand-tag">{selectedEvent?.photo_count || 0} FOTOS</span>
+            <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
+              <X size={20} />
+            </button>
+          </div>
         </div>
+
+        <div className="mb-6 px-1">
+          <h1 className="text-2xl font-black text-white uppercase tracking-wider">{selectedEvent?.name}</h1>
+        </div>
+
         <div className="event-tabs">
-          <button className={`tab-btn ${panelTab === 'upload' ? 'active' : ''}`} onClick={() => setPanelTab('upload')}>
-            Subir Fotos
+          <button className="tab-btn mb-4" onClick={() => { setView('events'); setFiles([]); setUploadProgress({}); setIsSidebarOpen(false) }}>
+            <ArrowLeft size={18} /> Volver a Eventos
           </button>
-          <button className={`tab-btn ${panelTab === 'orders' ? 'active' : ''}`} onClick={() => setPanelTab('orders')}>
-            Ventas / Tickets
+
+          <button className={`tab-btn ${panelTab === 'upload' ? 'active' : ''}`} onClick={() => { setPanelTab('upload'); setIsSidebarOpen(false) }}>
+            <Upload size={18} /> Subir Fotos
+          </button>
+          <button className={`tab-btn ${panelTab === 'orders' ? 'active' : ''}`} onClick={() => { setPanelTab('orders'); setIsSidebarOpen(false) }}>
+            <ShoppingCart size={18} /> Ventas / Tickets
           </button>
         </div>
-        <button className="btn-logout" onClick={handleLogout}>
-          <LogOut size={18} />
-        </button>
-      </header>
+
+        <div className="sidebar-footer">
+          <button className="btn-logout-sidebar" onClick={handleLogout} aria-label="Cerrar sesión">
+            <LogOut size={18} /> Salir
+          </button>
+        </div>
+      </aside>
 
       <main className="panel-main">
         {panelTab === 'orders' ? (
