@@ -573,6 +573,7 @@ const PhotographerPanel = () => {
           <ArrowLeft size={18} />
         </button>
         <div className="panel-brand">
+          <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="brand-logo" style={{ marginRight: '8px' }} />
           <span className="event-title-header">{selectedEvent?.name}</span>
           <span className="brand-tag">{selectedEvent?.photo_count || 0} fotos</span>
         </div>
