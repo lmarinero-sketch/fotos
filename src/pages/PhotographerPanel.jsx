@@ -634,7 +634,17 @@ const PhotographerPanel = () => {
           </div>
         ) : (
           <div className="panel-card">
-            <h2><Upload size={22} /> Subir fotos</h2>
+            <div className="upload-header-row">
+              <h2><Upload size={22} /> Subir fotos</h2>
+              <div className="upload-actions-row">
+                <button className="btn-ghost" onClick={() => !uploading && document.getElementById('file-input').click()}>
+                  <Image size={16} /> Sumar Fotos
+                </button>
+                <button className="btn-ghost" onClick={() => !uploading && document.getElementById('folder-input').click()}>
+                  <FolderPlus size={16} /> Subir Carpeta
+                </button>
+              </div>
+            </div>
 
             {/* Drop Zone */}
             <div
@@ -642,13 +652,21 @@ const PhotographerPanel = () => {
               onDrop={handleDrop}
               onDragOver={(e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over') }}
               onDragLeave={(e) => e.currentTarget.classList.remove('drag-over')}
-              onClick={() => !uploading && document.getElementById('file-input').click()}
+              onClick={() => !uploading && document.getElementById('folder-input').click()}
             >
               <input
                 id="file-input"
                 type="file"
                 multiple
                 accept="image/*"
+                onChange={handleFileSelect}
+                style={{ display: 'none' }}
+                disabled={uploading}
+              />
+              <input
+                id="folder-input"
+                type="file"
+                webkitdirectory="true"
                 onChange={handleFileSelect}
                 style={{ display: 'none' }}
                 disabled={uploading}
@@ -669,6 +687,46 @@ const PhotographerPanel = () => {
                 </>
               )}
             </div>
+
+            {/* Global Progress Dashboard */}
+            {files.length > 0 && (
+              <div className="global-upload-dashboard">
+                {(() => {
+                  const doneCount = Object.values(uploadProgress).filter(s => s === 'done').length
+                  const errorCount = Object.values(uploadProgress).filter(s => s === 'error').length
+                  const total = files.length
+                  const isFinished = uploadComplete && total > 0 && !uploading
+                  const percent = (uploading || isFinished) ? Math.round(((doneCount + errorCount) / total) * 100) : 0
+                  
+                  return (
+                    <div className="global-progress">
+                      <div className="global-progress-header">
+                        <span className="status-badge">
+                          {isFinished ? '✅ Carga Finalizada' : uploading ? '🚀 Subiendo al servidor...' : 'Pausado / En Espera'}
+                        </span>
+                        {(uploading || isFinished) && <span className="mono text-cyan">Progreso: {percent}%</span>}
+                      </div>
+                      
+                      <div className="global-bar-bg">
+                        <div className={`global-bar-fill ${isFinished ? 'finished' : ''}`} style={{ width: `${percent}%` }} />
+                      </div>
+
+                      <div className="global-stats mono">
+                        <span>Total: {total}</span>
+                        <span className="status-success">Subidas: {doneCount}</span>
+                        {errorCount > 0 && <span className="status-error">Errores: {errorCount}</span>}
+                      </div>
+
+                      {!uploading && !uploadComplete && (
+                        <button className="btn-primary start-upload-btn" onClick={handleUpload}>
+                          Comenzar Carga Mágica ({total} archivos)
+                        </button>
+                      )}
+                    </div>
+                  )
+                })()}
+              </div>
+            )}
 
             {/* Files to upload */}
             {files.length > 0 && (
