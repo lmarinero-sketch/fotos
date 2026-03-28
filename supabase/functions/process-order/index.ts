@@ -50,33 +50,31 @@ const sendWhatsAppMessage = async (phone: string, content: string, mediaUrl?: st
 
 // ── Parse incoming WhatsApp message ──
 const parseClientMessage = (rawMessage) => {
-  // Remove WhatsApp bold markers (*) for parsing
-  const msg = rawMessage.trim()
-
-  // Extract event name: between "*EventName:*" pattern
-  // Look for a line like " *Top Man Mendoza:*"
-  const eventMatch = msg.match(/\*([^*]+?):\*\s*\n/g)
+  const cleanMsg = rawMessage.replace(/\*/g, '').trim()
+  const lines = cleanMsg.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+  
   let eventName = ''
-
-  if (eventMatch) {
-    // First match after the intro line is the event name
-    for (const match of eventMatch) {
-      const cleaned = match.replace(/\*/g, '').replace(':', '').trim()
-      if (cleaned.toLowerCase() !== 'son en total' &&
-          !cleaned.toLowerCase().includes('misfotos') &&
-          !cleaned.toLowerCase().includes('gracias')) {
-        eventName = cleaned
-        break
+  const photos = []
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    if (line.startsWith('-')) {
+      photos.push(line.substring(1).trim())
+    } else if (line.endsWith(':')) {
+      const candidate = line.substring(0, line.length - 1).trim()
+      if (candidate.toLowerCase() !== 'son en total' && 
+          !candidate.toLowerCase().includes('misfotos.click') &&
+          !candidate.toLowerCase().includes('me interesan estas fotos')) {
+        eventName = candidate
+      }
+    } else if (!line.startsWith('Hola!') && !line.includes('fotos.') && !line.includes('Gracias!') && !line.match(/^\d+$/)) {
+      // fallback heuristic
+      if (!eventName && i > 0 && lines[i+1] && lines[i+1].startsWith('-')) {
+        eventName = line.replace(/:$/, '').trim()
       }
     }
   }
-
-  // Extract photo names: lines starting with " - " or "- "
-  const photoLines = msg.match(/^\s*-\s+(.+)$/gm) || []
-  const photos = photoLines.map(line =>
-    line.replace(/^\s*-\s+/, '').replace(/\*/g, '').trim()
-  ).filter(p => p.length > 0)
-
+  
   return { eventName, photos }
 }
 
@@ -97,7 +95,6 @@ Deno.serve(async (req) => {
     // BuilderBot webhook formats:
     // INCOMING: { eventName: "message.incoming", data: { body: "...", name: "Leifer", from: "3400000" } }
     // OUTGOING: { eventName: "message.outgoing", data: { answer: "...", from: "3400000" } }
-    const isOutgoing = body.eventName === 'message.outgoing'
     const rawMessage = body.data?.body || body.data?.answer || body.message || ''
     const clientPhone = body.data?.from || body.phone || ''
     const clientName = body.data?.name || ''
@@ -105,8 +102,11 @@ Deno.serve(async (req) => {
 
     // ── ROUTER: Detect message type ──
 
-    // 1) "Todo ok PD-XXXX" → Approve order (more permissive regex)
-    const approveMatch = cleanMsg.match(/todo\s*ok\s*(pd-\d{4})/i)
+    // 1) "Todo ok PD-XXXX" → Approve order
+    // STRICT match: the ENTIRE message must be just "Todo ok PD-XXXX" (with optional whitespace)
+    // This prevents the photographer notification (which CONTAINS "Todo ok PD-XXXX" 
+    // inside a longer paragraph) from triggering auto-approval.
+    const approveMatch = cleanMsg.match(/^todo\s*ok\s*(pd-\d{4})\s*$/i)
     if (approveMatch) {
       const ticketCode = approveMatch[1].toUpperCase()
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!
@@ -196,6 +196,24 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_URL'),
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
     )
+
+    // ── Anti-duplicate: skip if same phone + same event within 60s ──
+    const oneMinuteAgo = new Date(Date.now() - 60000).toISOString()
+    const { data: recentOrder } = await supabase
+      .from('orders')
+      .select('id, ticket_code')
+      .eq('client_phone', clientPhone)
+      .ilike('event_name', eventName)
+      .gte('created_at', oneMinuteAgo)
+      .limit(1)
+      .maybeSingle()
+
+    if (recentOrder) {
+      return new Response(
+        JSON.stringify({ skip: true, reason: 'Duplicate order detected', existing_ticket: recentOrder.ticket_code }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
 
     // ── Get event pricing from DB ──
     const { data: eventData } = await supabase

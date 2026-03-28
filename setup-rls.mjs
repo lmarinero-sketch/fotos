@@ -1,7 +1,7 @@
 // Setup RLS policies for events table
 // Usage: node setup-rls.mjs
 
-const MGMT_TOKEN = 'sbp_652501246151de5fe3cb95fb04f7f3f7f2a4900a'
+const MGMT_TOKEN = 'sbp_f9d0cfe09cc1fc2fd9fdacfea8f6a987b6644977'
 const PROJECT_REF = 'pxvhovctyewwppwkldaq'
 
 async function runSQL(label, sql) {

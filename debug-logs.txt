@@ -1,0 +1,127 @@
+WEBHOOK DEBUG LOGS - 11 entries
+============================================================
+
+--- #1 [12:56:47] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=+5492643229503 | msg=✅ Pedido PD-9608 entregado
+2/2 fotos enviadas
+Evento: Test2
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"+5492643229503","answer":"✅ Pedido PD-9608 entregado\n2/2 fotos enviadas\nEvento: Test2","options":{"media":null},"respMessage":null,"attachment":[],"projectId":"f5f7490e-9308-494f-ba24-82846175f37c","body":"✅ Pedido PD-9608 entregado\n2/2 fotos enviadas\nEvento: Test2"},"projectId":"f5f7490e-9308-494f-ba24-82846175f37c"}
+
+--- #2 [12:56:47] ---
+  error_message: eventType=message.incoming | isIncoming=true | phone=5492645609996 | msg=✅ Pedido PD-9608 entregado
+2/2 fotos enviadas
+Evento: Test2
+  eventName: message.incoming
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["key","messageTimestamp","pushName","message","verifiedBizName","body","name","from","attachment","urlsTempsFiles","projectId"]
+  raw_body_snippet:
+    {"eventName":"message.incoming","data":{"key":{"remoteJid":"5492645609996@s.whatsapp.net","fromMe":false,"id":"3EB0A4A837703DF6CD6C81","senderLid":"4879183556827@lid","senderPn":"5492645609996:93@s.whatsapp.net"},"messageTimestamp":1774670206,"pushName":"jerpro fotos","message":{"extendedTextMessage":{"text":"✅ Pedido PD-9608 entregado\n2/2 fotos enviadas\nEvento: Test2"}},"verifiedBizName":"jerpro fotos","body":"✅ Pedido PD-9608 entregado\n2/2 fotos enviadas\nEvento: Test2","name":"jerpro fotos
+
+--- #3 [12:56:46] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=5492645438114 | msg=✅ ¡Listo! Te envié 2 fotos por acá para que las tengas a mano.
+
+📥 PARA NO PERDE
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"5492645438114","answer":"✅ ¡Listo! Te envié 2 fotos por acá para que las tengas a mano.\n\n📥 *PARA NO PERDER CALIDAD:*\nDescargalas en su resolución original (HD sin la compresión de WhatsApp) desde tu galería privada:\n\n👉 https://jerpro.vercel.app/PD-9608\n\n¡Que las disfrutes! ✨\n\nAutomatización hecha por Grow Labs, visitanos en www.growlabs.lat","options":{"media":null},"respMessage":null,"attachment":[],"projectId":"f5f7490e-9308-494f-ba24-
+
+--- #4 [12:56:40] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=5492645438114 | msg=📷 AND_0003.jpg
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"5492645438114","answer":"📷 AND_0003.jpg","options":{"media":"https://pxvhovctyewwppwkldaq.supabase.co/storage/v1/object/public/photos/events/test2/and_0003.jpg"},"respMessage":null,"attachment":["/tmp/and_0003_1774670200582_c238d2ca.jpg"],"projectId":"f5f7490e-9308-494f-ba24-82846175f37c","body":"📷 AND_0003.jpg"},"projectId":"f5f7490e-9308-494f-ba24-82846175f37c"}
+
+--- #5 [12:56:37] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=5492645438114 | msg=📷 AND_0001.jpg
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"5492645438114","answer":"📷 AND_0001.jpg","options":{"media":"https://pxvhovctyewwppwkldaq.supabase.co/storage/v1/object/public/photos/events/test2/and_0001.jpg"},"respMessage":null,"attachment":["/tmp/and_0001_1774670196622_8b60b1a8.jpg"],"projectId":"f5f7490e-9308-494f-ba24-82846175f37c","body":"📷 AND_0001.jpg"},"projectId":"f5f7490e-9308-494f-ba24-82846175f37c"}
+
+--- #6 [12:56:34] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=5492645438114 | msg=📸 ¡Tus fotos de "Test2" están listas!
+
+Te envío 2 fotos a continuación ⬇️
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"5492645438114","answer":"📸 ¡Tus fotos de \"Test2\" están listas!\n\nTe envío 2 fotos a continuación ⬇️","options":{"media":null},"respMessage":null,"attachment":[],"projectId":"f5f7490e-9308-494f-ba24-82846175f37c","body":"📸 ¡Tus fotos de \"Test2\" están listas!\n\nTe envío 2 fotos a continuación ⬇️"},"projectId":"f5f7490e-9308-494f-ba24-82846175f37c"}
+
+--- #7 [12:56:33] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=5492645609996 | msg=⏳ Procesando entrega del ticket PD-9608...
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"5492645609996","answer":"⏳ Procesando entrega del ticket PD-9608...","options":{"media":null},"respMessage":null,"attachment":[],"projectId":"f5f7490e-9308-494f-ba24-82846175f37c","body":"⏳ Procesando entrega del ticket PD-9608..."},"projectId":"f5f7490e-9308-494f-ba24-82846175f37c"}
+
+--- #8 [12:56:33] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=+5492643229503 | msg=📋 Nuevo pedido recibido
+
+Ticket: PD-9608
+Cliente: 5492645438114
+Evento: Test2
+F
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"+5492643229503","answer":"📋 Nuevo pedido recibido\n\nTicket: PD-9608\nCliente: 5492645438114\nEvento: Test2\nFotos: AND_0001.jpg, AND_0003.jpg\nTotal: $30.000\n\nCuando confirmes el pago, respondé en el chat del cliente:\n*Todo ok PD-9608*\n\n⚠️ Escribí SOLO eso, nada más.","options":{"media":null},"respMessage":null,"attachment":[],"projectId":"f5f7490e-9308-494f-ba24-82846175f37c","body":"📋 Nuevo pedido recibido\n\nTicket: PD-9608\nCliente: 549
+
+--- #9 [12:56:32] ---
+  error_message: eventType=message.incoming | isIncoming=true | phone=5492645609996 | msg=📋 Nuevo pedido recibido
+
+Ticket: PD-9608
+Cliente: 5492645438114
+Evento: Test2
+F
+  eventName: message.incoming
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["key","messageTimestamp","pushName","message","verifiedBizName","body","name","from","attachment","urlsTempsFiles","projectId"]
+  raw_body_snippet:
+    {"eventName":"message.incoming","data":{"key":{"remoteJid":"5492645609996@s.whatsapp.net","fromMe":false,"id":"3EB088C1AC57138AFF8661","senderLid":"4879183556827@lid","senderPn":"5492645609996:93@s.whatsapp.net"},"messageTimestamp":1774670192,"pushName":"jerpro fotos","message":{"extendedTextMessage":{"text":"📋 Nuevo pedido recibido\n\nTicket: PD-9608\nCliente: 5492645438114\nEvento: Test2\nFotos: AND_0001.jpg, AND_0003.jpg\nTotal: $30.000\n\nCuando confirmes el pago, respondé en el chat del cl
+
+--- #10 [12:56:32] ---
+  error_message: eventType=message.outgoing | isIncoming=false | phone=5492645438114 | msg=¡Perfecto! Ya tomamos tu pedido 📸
+
+📋 Pedido: PD-9608
+🎪 Evento: Test2
+📷 Fotos
+  eventName: message.outgoing
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["from","answer","options","respMessage","attachment","projectId","body"]
+  raw_body_snippet:
+    {"eventName":"message.outgoing","data":{"from":"5492645438114","answer":"¡Perfecto! Ya tomamos tu pedido 📸\n\n📋 *Pedido: PD-9608*\n🎪 Evento: Test2\n📷 Fotos: 2\n\n*Te detallo los precios del evento:*\n👉 Individual: $15.000 c/u\n🎁 *Pack completo:* $150.000\n\nLlevas 2 fotos.\n💰 *Total a transferir: $30.000*\n\n💳 *Este es el CBU para hacer la transferencia:*\n\nCBU: 0000007900204719749012\nAlias: JEREMIASRIARTE1.UALA\nBanco: Uala\n*Titular: Jeremias Riarte Emanuel*\n\n*Una vez que hagas la 
+
+--- #11 [12:56:31] ---
+  error_message: eventType=message.incoming | isIncoming=true | phone=5492645438114 | msg=Hola! Estoy en misfotos.click me interesan estas fotos: 
+
+ Test2:
+ - AND_0001.jp
+  eventName: message.incoming
+  event: undefined
+  keys: ["eventName","data","projectId"]
+  data_keys: ["key","messageTimestamp","pushName","message","body","name","from","attachment","urlsTempsFiles","projectId"]
+  raw_body_snippet:
+    {"eventName":"message.incoming","data":{"key":{"remoteJid":"5492645438114@s.whatsapp.net","fromMe":false,"id":"3EB0B359D5D620B5CA0335","senderLid":"30391356371121:75@lid","senderPn":"5492645438114@s.whatsapp.net"},"messageTimestamp":1774670190,"pushName":"Lucas Marinero","message":{"extendedTextMessage":{"text":"*Hola! Estoy en misfotos.click me interesan estas fotos:* \n\n *Test2:*\n - AND_0001.jpg\n - AND_0003.jpg\n*Son en total:*\n2 fotos.\n*Gracias!*","contextInfo":{"ephemeralSettingTimestam
+
