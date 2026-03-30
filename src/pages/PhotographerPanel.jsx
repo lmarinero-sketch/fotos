@@ -392,7 +392,7 @@ const PhotographerPanel = () => {
   const loadEventPhotos = async (slug) => {
     const { data } = await supabase.storage
       .from('photos')
-      .list(`events/${slug}`, { limit: 500, sortBy: { column: 'name', order: 'asc' } })
+      .list(`events/${slug}`, { limit: 10, sortBy: { column: 'name', order: 'asc' } })
 
     setEventPhotos(data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [])
   }
@@ -1093,11 +1093,17 @@ const PhotographerPanel = () => {
             {eventPhotos.length > 0 && (
               <>
                 <div className="section-divider">
-                  <span>Fotos subidas ({eventPhotos.length})</span>
+                  <span>Fotos subidas ({selectedEvent?.photo_count || eventPhotos.length})</span>
                 </div>
+                
+                <p style={{textAlign: 'center', color: '#8b949e', fontSize: '13px', marginBottom: '16px'}}>
+                  Mostrando solo las primeras 10 fotos para no sobrecargar el navegador de memoria.
+                </p>
+
                 <div className="photos-grid">
                   {eventPhotos.map((photo) => {
-                    const publicUrl = `${supabaseUrl}/storage/v1/object/public/photos/events/${selectedEvent.slug}/${photo.name}`
+                    // Usa el resize/transform the supabase para cargar extremadamente mas ligero
+                    const publicUrl = `${supabaseUrl}/storage/v1/render/image/public/photos/events/${selectedEvent.slug}/${photo.name}?width=300&quality=70`
                     return (
                       <div key={photo.name} className="photo-card">
                         <img src={publicUrl} alt={photo.name} loading="lazy" />
@@ -1114,6 +1120,25 @@ const PhotographerPanel = () => {
                       </div>
                     )
                   })}
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', paddingBottom: '30px' }}>
+                   <a 
+                     href="https://supabase.com/dashboard/project/pxvhovctyewwppwkldaq/storage/buckets/photos" 
+                     target="_blank" 
+                     rel="noreferrer"
+                     style={{
+                        backgroundColor: '#1E3A8A',
+                        color: 'white',
+                        padding: '12px 24px',
+                        borderRadius: '8px',
+                        textDecoration: 'none',
+                        fontWeight: 'bold',
+                        letterSpacing: '1px'
+                     }}
+                   >
+                     VER TODAS LAS FOTOS ({selectedEvent?.photo_count || 0}) EN SUPABASE
+                   </a>
                 </div>
               </>
             )}
