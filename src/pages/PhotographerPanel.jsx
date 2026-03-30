@@ -9,6 +9,7 @@ import './PhotographerPanel.css'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Sanitize filenames for Supabase Storage (no accents, no special chars)
@@ -28,6 +29,143 @@ const sanitizeSlug = (name) => {
     .replace(/[^a-zA-Z0-9_-]/g, '')
     .toLowerCase()
 }
+
+// ── Helpers para Gemini y Watermark ──
+
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+  const reader = new FileReader();
+  reader.readAsDataURL(file);
+  reader.onload = () => resolve(reader.result.split(',')[1]);
+  reader.onerror = error => reject(error);
+});
+
+const detectBibNumber = async (file, apiKey) => {
+  if (!apiKey) return null;
+  try {
+    const base64Image = await fileToBase64(file);
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+
+    const payload = {
+      contents: [{
+        parts: [
+          { text: "Actúa como un OCR experto. Lee el DORSAL o PLACA del participante. IMPORTANTE: En la placa suele haber un número enorme (ej: categoría) y números más pequeños al lado o abajo. DEBES JUNTARLOS TODOS de izquierda a derecha o de arriba abajo. Por ejemplo, si ves un '4' muy grande y al lado '18' más chico, tu respuesta exacta debe ser '418'. Si ves '1089', responde '1089'. Responde ÚNICAMENTE con la cifra numérica completa final unida y nada más. Si no hay placa, responde NONE." },
+          { inlineData: { mimeType: file.type, data: base64Image } }
+        ]
+      }],
+      safetySettings: [
+        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+      ],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 40 }
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await response.json();
+    console.log("🔍 Data Interna Gemini:", JSON.stringify(data).substring(0, 300));
+    
+    if (!response.ok) {
+      console.error("API Gemini Error:", data);
+      return null;
+    }
+
+    const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+    console.log("🤖 Gemini vió exactamente esto:", textResult);
+
+    
+    const cleaned = textResult.replace(/['"]/g, '').trim();
+    if (cleaned.toUpperCase().includes('NONE') || !cleaned) {
+      return null;
+    }
+    
+    // Si Gemini responde "1,089" o "1.089", extraemos todos los números juntos: "1089"
+    const digitsOnly = cleaned.match(/\d+/g);
+    if (digitsOnly) {
+      return digitsOnly.join('');
+    }
+    return cleaned;
+  } catch (error) {
+    console.error("Gemini Vision Error:", error);
+    return null;
+  }
+};
+
+const generateWatermark = (file) => new Promise((resolve, reject) => {
+  const img = new window.Image();
+  const url = URL.createObjectURL(file);
+  
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Target thumbnail width
+    const MAX_WIDTH = 1200;
+    let width = img.width;
+    let height = img.height;
+    
+    if (width > MAX_WIDTH) {
+      height = Math.round((height * MAX_WIDTH) / width);
+      width = MAX_WIDTH;
+    }
+    
+    canvas.width = width;
+    canvas.height = height;
+    
+    ctx.drawImage(img, 0, 0, width, height);
+    
+    // Obscure layer for premium feel (cyber aesthetic)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Diagonal repetitive pattern
+    ctx.translate(width / 2, height / 2);
+    ctx.rotate(-Math.PI / 6);
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+    ctx.font = `bold ${width / 12}px Inter, sans-serif`;
+    
+    const text = "JERPRO";
+    for (let i = -3; i <= 3; i++) {
+      for (let j = -3; j <= 3; j++) {
+        ctx.fillText(text, i * (width/2), j * (height/3));
+      }
+    }
+    
+    // Center main huge watermark in teal/green color
+    // Reset rotation and translate
+    ctx.setTransform(1, 0, 0, 1, 0, 0); 
+    ctx.translate(width/2, height/2);
+    ctx.fillStyle = 'rgba(0, 255, 136, 0.6)'; // Neon green/teal matching theme
+    ctx.font = `900 ${width / 5}px Inter, sans-serif`;
+    
+    // Stroke effect
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.strokeText("JERPRO", 0, 0);
+    ctx.fillText("JERPRO", 0, 0);
+
+    // Subtitle
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = `bold ${width / 25}px Inter, sans-serif`;
+    ctx.fillText("VISTA PREVIA DE COMPRA", 0, (width / 5) * 0.6);
+
+    canvas.toBlob((blob) => {
+      resolve({ blob, width: img.width, height: img.height });
+    }, 'image/webp', 0.85);
+  };
+  
+  img.onerror = () => reject(new Error('Failed to load image for watermarking'));
+  img.src = url;
+});
 
 const PhotographerPanel = () => {
   // Auth state
@@ -291,18 +429,65 @@ const PhotographerPanel = () => {
       const file = files[i]
       const safeName = sanitizeFileName(file.name)
       const filePath = `${folderPath}/${safeName}`
+      const baseName = safeName.replace(/\.[^/.]+$/, "")
+      const thumbName = `thumb_${baseName}.webp`
+      const thumbPath = `${folderPath}/${thumbName}`
 
       setUploadProgress(prev => ({ ...prev, [i]: 'uploading' }))
 
-      const { error } = await supabase.storage
-        .from('photos')
-        .upload(filePath, file, { cacheControl: '3600', upsert: true })
+      try {
+        // 1. Detección de número de corredor usando Gemini
+        let bibNumber = null;
+        if (geminiApiKey) {
+          bibNumber = await detectBibNumber(file, geminiApiKey);
+          console.log(`📸 Procesando ${file.name} - Dorsal detectado:`, bibNumber || 'Ninguno');
+        }
 
-      if (!error) {
+        // 2. Generar Watermark Thumbnail (Versión Prevista)
+        const { blob: thumbBlob, width, height } = await generateWatermark(file);
+
+        // 3. Subir Original a bucket 'photos'
+        const { error: originalError } = await supabase.storage
+          .from('photos')
+          .upload(filePath, file, { cacheControl: '3600', upsert: true })
+        
+        if (originalError) {
+          if (originalError.message?.includes('row-level security') || originalError.message?.includes('Duplicate')) {
+            console.warn(`[Aviso] La foto original ${file.name} ya existe en Supabase y está protegida contra sobre-escritura. Se saltará y solo procesaremos el resto.`);
+          } else {
+            throw originalError;
+          }
+        }
+
+        // 4. Subir Thumbnail con Watermark a bucket público 'thumbnails'
+        const { error: thumbError } = await supabase.storage
+          .from('thumbnails')
+          .upload(thumbPath, thumbBlob, { cacheControl: '3600', upsert: true })
+        if (thumbError) console.warn('Thumbnail upload warning:', thumbError);
+
+        // 5. Guardar metadata en BD public.event_photos
+        // Usamos upsert basado en el unique que se pueda armar, o simplemente insert
+        const { error: dbError } = await supabase
+          .from('event_photos')
+          .insert({
+            event_id: selectedEvent.id,
+            file_name: safeName,
+            original_path: filePath,
+            thumbnail_path: thumbPath,
+            bib_number: bibNumber,
+            width,
+            height,
+            file_size: file.size
+          });
+        if (dbError) {
+             // Ignoramos error si la tabla no existe por si el usuario aun no corrió el SQL
+             console.log('📝 Nota: no se insertó en DB, probablemente falte crear tabla event_photos.', dbError.message);
+        }
+
         successCount++
         setUploadProgress(prev => ({ ...prev, [i]: 'done' }))
-      } else {
-        console.error(`Upload failed: ${file.name}`, error)
+      } catch (error) {
+        console.error(`Ouch! Falló la subida de: ${file.name}`, error)
         setUploadProgress(prev => ({ ...prev, [i]: 'error' }))
       }
     }

@@ -132,7 +132,23 @@ Deno.serve(async (req) => {
         )
 
         if (!approveRes.ok) {
-           throw new Error(`approve-order returned ${approveRes.status}: ${await approveRes.text()}`)
+           const errorText = await approveRes.text()
+           let isHandled = false
+           try {
+             const errJson = JSON.parse(errorText)
+             if (approveRes.status === 404 && errJson.error === 'No photos found in storage') {
+                isHandled = true
+             }
+           } catch (_) {}
+
+           if (isHandled) {
+             // approve-order already sent the corresponding WhatsApp messages
+             return new Response(
+               JSON.stringify({ routed: 'approve-order', error: 'Photos not found, handled' }),
+               { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+             )
+           }
+           throw new Error(`approve-order returned ${approveRes.status}: ${errorText}`)
         }
 
         const approveResult = await approveRes.json()
@@ -153,7 +169,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ error: err.message }),
-          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
     }
@@ -170,7 +186,7 @@ Deno.serve(async (req) => {
     if (!clientPhone) {
       return new Response(
         JSON.stringify({ error: 'Missing client phone number' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -187,7 +203,7 @@ Deno.serve(async (req) => {
 
       return new Response(
         JSON.stringify({ error: 'Could not parse event name or photos from message', rawMessage }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -331,7 +347,7 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({ error: error.message }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

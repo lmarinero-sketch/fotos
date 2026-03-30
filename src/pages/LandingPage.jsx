@@ -81,28 +81,42 @@ const LandingPage = () => {
           </div>
 
           <h1 className="hero-title animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-            REVIVÍ LA <br />
-            <span className="hero-title-accent">ADRENALINA</span>
+            ENCUENTRA TU <br />
+            <span className="hero-title-accent">GLORIA</span>
           </h1>
 
           <p className="hero-subtitle animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            La carrera terminó, pero la gloria es para siempre. Ingresá tu código para descargar tus momentos épicos en alta resolución.
+            La carrera terminó, pero el recuerdo es para siempre. Busca tus fotos por tu número de corredor o descarga tu compra si ya tienes un ticket.
           </p>
 
           <form
-            className={`terminal-form animate-fade-in-up ${isFocused ? 'focused' : ''} ${isReady ? 'ready' : ''}`}
+            className={`terminal-form animate-fade-in-up ${isFocused ? 'focused' : ''}`}
             style={{ animationDelay: '300ms' }}
-            onSubmit={handleSubmit}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (!ticketCode) return;
+              setIsScanning(true);
+              setTimeout(() => {
+                if (ticketCode.toUpperCase().startsWith('PD-')) {
+                  navigate(`/${ticketCode.toUpperCase()}`);
+                } else {
+                  navigate(`/search?bib=${ticketCode.replace(/[^0-9A-Za-z]/g, '')}`);
+                }
+              }, 1200);
+            }}
           >
             <div className="terminal-screen">
-              <div className="terminal-prefix">TICKET_ID~#</div>
+              <div className="terminal-prefix">DORSAL o TICKET_ID~#</div>
               <input
                 ref={inputRef}
                 type="text"
                 className="terminal-input"
-                placeholder="PD-XXXXXX"
+                placeholder="Ejemplo: 1089 o PD-XXX"
                 value={ticketCode}
-                onChange={handleChange}
+                onChange={(e) => {
+                  setTicketCode(e.target.value);
+                  setError('');
+                }}
                 onFocus={() => setIsFocused(true)}
                 onBlur={() => setIsFocused(false)}
                 maxLength={9}
@@ -112,13 +126,12 @@ const LandingPage = () => {
               />
               <button
                 type="submit"
-                className={`terminal-submit ${isReady ? 'pulse-ready' : ''}`}
-                disabled={!isReady || isScanning}
+                className={`terminal-submit ${ticketCode.length > 0 ? 'pulse-ready' : ''}`}
+                disabled={!ticketCode || isScanning}
               >
                 <ChevronRight size={24} />
               </button>
             </div>
-            {error && <div className="terminal-error">&gt;_ ERROR: {error}</div>}
           </form>
 
           <div className="hero-brand-below animate-fade-in-up" style={{ animationDelay: '400ms', marginTop: '3rem', display: 'flex', justifyContent: 'center' }}>
