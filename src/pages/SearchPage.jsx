@@ -39,7 +39,12 @@ const SearchPage = () => {
       const mappedPhotos = data.map(p => ({
         id: p.id,
         name: p.file_name,
-        thumbnail: supabase.storage.from('thumbnails').getPublicUrl(p.thumbnail_path).data.publicUrl,
+        thumbnail: supabase.storage.from('thumbnails').getPublicUrl(p.thumbnail_path, {
+          transform: {
+            width: 600,
+            quality: 80
+          }
+        }).data.publicUrl,
         eventName: p.events?.name || 'Evento Deportivo'
       }))
       setPhotos(mappedPhotos)

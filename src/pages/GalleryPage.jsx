@@ -54,12 +54,20 @@ const GalleryPage = () => {
       } else {
         const orderPhotos = (orderData.order_photos || [])
           .filter(p => p.storage_url) // only map ones that are ready in storage
-          .map(p => ({
-            id: p.id,
-            name: p.photo_name,
-            thumbnail: p.storage_url,
-            url: p.storage_url
-          }))
+          .map(p => {
+            const getOptimizedUrl = (url) => {
+              if (url && url.includes('/storage/v1/object/public/')) {
+                return url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=800&quality=80'
+              }
+              return url
+            }
+            return {
+              id: p.id,
+              name: p.photo_name,
+              thumbnail: getOptimizedUrl(p.storage_url),
+              url: p.storage_url
+            }
+          })
         
         setOrder({
           id: orderData.ticket_code,

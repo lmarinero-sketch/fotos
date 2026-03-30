@@ -425,71 +425,79 @@ const PhotographerPanel = () => {
     const folderPath = `events/${selectedEvent.slug}`
     let successCount = 0
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
-      const safeName = sanitizeFileName(file.name)
-      const filePath = `${folderPath}/${safeName}`
-      const baseName = safeName.replace(/\.[^/.]+$/, "")
-      const thumbName = `thumb_${baseName}.webp`
-      const thumbPath = `${folderPath}/${thumbName}`
+    // BATCH PROCESSING (Concurrency = 4) to speed up huge uploads
+    const BATCH_SIZE = 4;
+    for (let batchStart = 0; batchStart < files.length; batchStart += BATCH_SIZE) {
+      const batch = files.slice(batchStart, batchStart + BATCH_SIZE);
+      
+      await Promise.all(batch.map(async (file, indexInBatch) => {
+        const i = batchStart + indexInBatch;
+        const safeName = sanitizeFileName(file.name)
+        const filePath = `${folderPath}/${safeName}`
+        const baseName = safeName.replace(/\.[^/.]+$/, "")
+        const thumbName = `thumb_${baseName}.webp`
+        const thumbPath = `${folderPath}/${thumbName}`
 
-      setUploadProgress(prev => ({ ...prev, [i]: 'uploading' }))
+        setUploadProgress(prev => ({ ...prev, [i]: 'uploading' }))
 
-      try {
-        // 1. Detección de número de corredor usando Gemini
-        let bibNumber = null;
-        if (geminiApiKey) {
-          bibNumber = await detectBibNumber(file, geminiApiKey);
-          console.log(`📸 Procesando ${file.name} - Dorsal detectado:`, bibNumber || 'Ninguno');
-        }
-
-        // 2. Generar Watermark Thumbnail (Versión Prevista)
-        const { blob: thumbBlob, width, height } = await generateWatermark(file);
-
-        // 3. Subir Original a bucket 'photos'
-        const { error: originalError } = await supabase.storage
-          .from('photos')
-          .upload(filePath, file, { cacheControl: '3600', upsert: true })
-        
-        if (originalError) {
-          if (originalError.message?.includes('row-level security') || originalError.message?.includes('Duplicate')) {
-            console.warn(`[Aviso] La foto original ${file.name} ya existe en Supabase y está protegida contra sobre-escritura. Se saltará y solo procesaremos el resto.`);
-          } else {
-            throw originalError;
+        try {
+          // 1. Detección de número de corredor usando Gemini
+          let bibNumber = null;
+          if (geminiApiKey) {
+            try {
+              bibNumber = await detectBibNumber(file, geminiApiKey);
+              console.log(`📸 Procesando ${file.name} - Dorsal detectado:`, bibNumber || 'Ninguno');
+            } catch (geminiError) {
+              console.warn(`[Aviso] Detección de Gemini fallida para ${file.name}.`, geminiError);
+            }
           }
+
+          // 2. Generar Watermark Thumbnail (Versión Prevista)
+          const { blob: thumbBlob, width, height } = await generateWatermark(file);
+
+          // 3 & 4. Subir Original y Thumbnail al mismo tiempo
+          const uploadPromises = [
+            supabase.storage.from('photos').upload(filePath, file, { cacheControl: '3600', upsert: true }),
+            supabase.storage.from('thumbnails').upload(thumbPath, thumbBlob, { cacheControl: '3600', upsert: true })
+          ];
+          
+          const [originalRes, thumbRes] = await Promise.all(uploadPromises);
+          
+          if (originalRes.error) {
+            if (originalRes.error.message?.includes('row-level security') || originalRes.error.message?.includes('Duplicate')) {
+              console.warn(`[Aviso] La foto original ${file.name} ya existe en Supabase y está protegida. Se saltará.`);
+            } else {
+              throw originalRes.error;
+            }
+          }
+
+          if (thumbRes.error) console.warn('Thumbnail upload warning:', thumbRes.error);
+
+          // 5. Guardar metadata en BD public.event_photos
+          const { error: dbError } = await supabase
+            .from('event_photos')
+            .insert({
+              event_id: selectedEvent.id,
+              file_name: safeName,
+              original_path: filePath,
+              thumbnail_path: thumbPath,
+              bib_number: bibNumber,
+              width,
+              height,
+              file_size: file.size
+            });
+            
+          if (dbError) {
+               console.log('📝 Nota: no se insertó en DB.', dbError.message);
+          }
+
+          successCount++;
+          setUploadProgress(prev => ({ ...prev, [i]: 'done' }))
+        } catch (error) {
+          console.error(`Ouch! Falló la subida de: ${file.name}`, error)
+          setUploadProgress(prev => ({ ...prev, [i]: 'error' }))
         }
-
-        // 4. Subir Thumbnail con Watermark a bucket público 'thumbnails'
-        const { error: thumbError } = await supabase.storage
-          .from('thumbnails')
-          .upload(thumbPath, thumbBlob, { cacheControl: '3600', upsert: true })
-        if (thumbError) console.warn('Thumbnail upload warning:', thumbError);
-
-        // 5. Guardar metadata en BD public.event_photos
-        // Usamos upsert basado en el unique que se pueda armar, o simplemente insert
-        const { error: dbError } = await supabase
-          .from('event_photos')
-          .insert({
-            event_id: selectedEvent.id,
-            file_name: safeName,
-            original_path: filePath,
-            thumbnail_path: thumbPath,
-            bib_number: bibNumber,
-            width,
-            height,
-            file_size: file.size
-          });
-        if (dbError) {
-             // Ignoramos error si la tabla no existe por si el usuario aun no corrió el SQL
-             console.log('📝 Nota: no se insertó en DB, probablemente falte crear tabla event_photos.', dbError.message);
-        }
-
-        successCount++
-        setUploadProgress(prev => ({ ...prev, [i]: 'done' }))
-      } catch (error) {
-        console.error(`Ouch! Falló la subida de: ${file.name}`, error)
-        setUploadProgress(prev => ({ ...prev, [i]: 'error' }))
-      }
+      }));
     }
 
     // Update event photo count
