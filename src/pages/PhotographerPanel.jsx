@@ -452,16 +452,16 @@ const PhotographerPanel = () => {
             }
           }
 
-          // 2. Generar Watermark Thumbnail (Versión Prevista)
-          const { blob: thumbBlob, width, height } = await generateWatermark(file);
+          // 2. Se quita generación de Watermark a pedido para dar prioridad a ultra velocidad
+          const width = null;
+          const height = null;
 
-          // 3 & 4. Subir Original y Thumbnail al mismo tiempo
+          // 3. Subir Original (ahora más rápido y consumiendo mitad de ancho de banda)
           const uploadPromises = [
             supabase.storage.from('photos').upload(filePath, file, { cacheControl: '3600', upsert: true }),
-            supabase.storage.from('thumbnails').upload(thumbPath, thumbBlob, { cacheControl: '3600', upsert: true })
           ];
           
-          const [originalRes, thumbRes] = await Promise.all(uploadPromises);
+          const [originalRes] = await Promise.all(uploadPromises);
           
           if (originalRes.error) {
             if (originalRes.error.message?.includes('row-level security') || originalRes.error.message?.includes('Duplicate')) {
@@ -471,7 +471,7 @@ const PhotographerPanel = () => {
             }
           }
 
-          if (thumbRes.error) console.warn('Thumbnail upload warning:', thumbRes.error);
+
 
           // 5. Guardar metadata en BD public.event_photos
           const { error: dbError } = await supabase
@@ -480,7 +480,7 @@ const PhotographerPanel = () => {
               event_id: selectedEvent.id,
               file_name: safeName,
               original_path: filePath,
-              thumbnail_path: thumbPath,
+              thumbnail_path: null,
               bib_number: bibNumber,
               width,
               height,

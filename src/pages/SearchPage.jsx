@@ -36,17 +36,21 @@ const SearchPage = () => {
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      const mappedPhotos = data.map(p => ({
-        id: p.id,
-        name: p.file_name,
-        thumbnail: supabase.storage.from('thumbnails').getPublicUrl(p.thumbnail_path, {
-          transform: {
-            width: 600,
-            quality: 80
-          }
-        }).data.publicUrl,
-        eventName: p.events?.name || 'Evento Deportivo'
-      }))
+      const mappedPhotos = data.map(p => {
+        const bucket = p.thumbnail_path ? 'thumbnails' : 'photos'
+        const path = p.thumbnail_path || p.original_path
+        return {
+          id: p.id,
+          name: p.file_name,
+          thumbnail: supabase.storage.from(bucket).getPublicUrl(path, {
+            transform: {
+              width: 600,
+              quality: 80
+            }
+          }).data.publicUrl,
+          eventName: p.events?.name || 'Evento Deportivo'
+        }
+      })
       setPhotos(mappedPhotos)
     } else {
       setPhotos([])
