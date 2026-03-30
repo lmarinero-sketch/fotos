@@ -1,0 +1,32 @@
+[
+  {
+    "id": "c3fc92ed-02c7-4783-9db6-d74bf024e51b",
+    "created_at": "2026-03-30T21:18:17.087456+00:00",
+    "error_source": "process-order-approve-call",
+    "error_message": "approve-order returned 404: {\"error\":\"No photos found in storage\",\"missing\":[\"AND_0011.jpg\",\"AND_0013.jpg\"]}",
+    "payload": {
+      "ticketCode": "PD-6675",
+      "clientPhone": "5492645438114"
+    }
+  },
+  {
+    "id": "95f3ca6f-a86c-428c-a273-f0b3ede0a140",
+    "created_at": "2026-03-30T21:18:11.771374+00:00",
+    "error_source": "process-order-approve-call",
+    "error_message": "approve-order returned 404: {\"error\":\"No photos found in storage\",\"missing\":[\"AND_0011.jpg\",\"AND_0013.jpg\"]}",
+    "payload": {
+      "ticketCode": "PD-6675",
+      "clientPhone": "5492645438114"
+    }
+  },
+  {
+    "id": "ceaa8823-8473-4f38-8530-baa0c824d02b",
+    "created_at": "2026-03-30T21:18:08.359268+00:00",
+    "error_source": "process-order-approve-call",
+    "error_message": "approve-order returned 404: {\"error\":\"No photos found in storage\",\"missing\":[\"AND_0011.jpg\",\"AND_0013.jpg\"]}",
+    "payload": {
+      "ticketCode": "PD-6675",
+      "clientPhone": "5492645438114"
+    }
+  }
+]

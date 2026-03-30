@@ -1102,8 +1102,7 @@ const PhotographerPanel = () => {
 
                 <div className="photos-grid">
                   {eventPhotos.map((photo) => {
-                    // Usa el resize/transform the supabase para cargar extremadamente mas ligero
-                    const publicUrl = `${supabaseUrl}/storage/v1/render/image/public/photos/events/${selectedEvent.slug}/${photo.name}?width=300&quality=70`
+                    const publicUrl = `${supabaseUrl}/storage/v1/object/public/photos/events/${selectedEvent.slug}/${photo.name}`
                     return (
                       <div key={photo.name} className="photo-card">
                         <img src={publicUrl} alt={photo.name} loading="lazy" />

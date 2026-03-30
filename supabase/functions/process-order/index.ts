@@ -177,6 +177,13 @@ Deno.serve(async (req) => {
     // 2) "Hola! Estoy en misfotos.click..." → New order
     const triggerPhrase = 'Hola! Estoy'
     if (!cleanMsg.startsWith(triggerPhrase) && !cleanMsg.toLowerCase().includes('misfotos.click')) {
+      const sb = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
+      await sb.from('system_errors').insert({
+        error_source: 'process-order-debug-skip',
+        error_message: 'Mensaje ignorado o payload irreconocible de BuilderBot',
+        payload: { body, rawMessage, cleanMsg }
+      })
+      
       return new Response(
         JSON.stringify({ skip: true, reason: 'Message does not match any trigger' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
