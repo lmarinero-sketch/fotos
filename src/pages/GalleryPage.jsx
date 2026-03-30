@@ -56,9 +56,6 @@ const GalleryPage = () => {
           .filter(p => p.storage_url) // only map ones that are ready in storage
           .map(p => {
             const getOptimizedUrl = (url) => {
-              if (url && url.includes('/storage/v1/object/public/')) {
-                return url.replace('/storage/v1/object/public/', '/storage/v1/render/image/public/') + '?width=800&quality=80'
-              }
               return url
             }
             return {

@@ -42,12 +42,7 @@ const SearchPage = () => {
         return {
           id: p.id,
           name: p.file_name,
-          thumbnail: supabase.storage.from(bucket).getPublicUrl(path, {
-            transform: {
-              width: 600,
-              quality: 80
-            }
-          }).data.publicUrl,
+          thumbnail: supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl,
           eventName: p.events?.name || 'Evento Deportivo'
         }
       })
