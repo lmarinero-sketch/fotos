@@ -108,12 +108,18 @@ Deno.serve(async (req) => {
 
     if (needsSearch) {
       // Sanitize event name to match storage folder (same logic as panel)
-      const slug = order.event_name.trim()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-        .replace(/\s+/g, '_')
-        .replace(/[^a-zA-Z0-9_-]/g, '')
-        .toLowerCase()
-      const folderPath = `events/${slug}`
+      const { data: eventData, error: eventError } = await supabase
+        .from('events')
+        .select('slug')
+        .eq('name', order.event_name)
+        .single()
+        
+      if (eventError || !eventData) {
+        console.error('Error fetching event slug:', eventError)
+        throw new Error(`No se encontró el evento "${order.event_name}" en la base de datos para buscar sus fotos.`)
+      }
+      
+      const folderPath = `events/${eventData.slug}`
 
       for (const photo of photosToSend) {
         if (photo.storage_url) continue;

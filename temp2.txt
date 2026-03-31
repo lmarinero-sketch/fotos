@@ -1,0 +1,79 @@
+[
+  {
+    "id": "3ef20ce0-e752-40c3-8554-0ca7229903ef",
+    "created_at": "2026-03-31T02:58:31.584368+00:00",
+    "error_source": "process-order-debug-skip",
+    "error_message": "Mensaje ignorado o payload irreconocible de BuilderBot",
+    "payload": {
+      "body": {
+        "data": {
+          "key": {
+            "id": "2AA454C787A1E08A3189",
+            "fromMe": true,
+            "remoteJid": "190344410959920@lid"
+          },
+          "body": "este fue medio duro hacia un calor de la yegua",
+          "from": "190344410959920",
+          "name": "jerpro fotos",
+          "status": 2,
+          "message": {
+            "conversation": "este fue medio duro hacia un calor de la yegua"
+          },
+          "pushName": "jerpro fotos",
+          "projectId": "f5f7490e-9308-494f-ba24-82846175f37c",
+          "attachment": [],
+          "urlsTempsFiles": [],
+          "verifiedBizName": "jerpro fotos",
+          "messageTimestamp": 1774925911
+        },
+        "eventName": "message.incoming",
+        "projectId": "f5f7490e-9308-494f-ba24-82846175f37c"
+      },
+      "cleanMsg": "este fue medio duro hacia un calor de la yegua",
+      "rawMessage": "este fue medio duro hacia un calor de la yegua"
+    }
+  },
+  {
+    "id": "24c5c016-ca89-4697-a5e3-a963bd05d182",
+    "created_at": "2026-03-31T02:58:19.754611+00:00",
+    "error_source": "process-order-debug-skip",
+    "error_message": "Mensaje ignorado o payload irreconocible de BuilderBot",
+    "payload": {
+      "body": {
+        "data": {
+          "key": {
+            "id": "2A9E9C1B8DD0940A1A48",
+            "fromMe": true,
+            "remoteJid": "190344410959920@lid"
+          },
+          "body": "listo de una cuando tenga planificado los otros eventos te voy avisando",
+          "from": "190344410959920",
+          "name": "jerpro fotos",
+          "status": 2,
+          "message": {
+            "extendedTextMessage": {
+              "text": "listo de una cuando tenga planificado los otros eventos te voy avisando",
+              "contextInfo": {
+                "stanzaId": "3A5C324BA281A2572E0B",
+                "participant": "190344410959920@lid",
+                "quotedMessage": {
+                  "conversation": "No hace falta ni que preguntes"
+                }
+              }
+            }
+          },
+          "pushName": "jerpro fotos",
+          "projectId": "f5f7490e-9308-494f-ba24-82846175f37c",
+          "attachment": [],
+          "urlsTempsFiles": [],
+          "verifiedBizName": "jerpro fotos",
+          "messageTimestamp": 1774925899
+        },
+        "eventName": "message.incoming",
+        "projectId": "f5f7490e-9308-494f-ba24-82846175f37c"
+      },
+      "cleanMsg": "listo de una cuando tenga planificado los otros eventos te voy avisando",
+      "rawMessage": "listo de una cuando tenga planificado los otros eventos te voy avisando"
+    }
+  }
+]
