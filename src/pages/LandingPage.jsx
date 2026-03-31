@@ -106,7 +106,7 @@ const LandingPage = () => {
             }}
           >
             <div className="terminal-screen">
-              <div className="terminal-prefix">DORSAL o TICKET_ID~#</div>
+              <div className="terminal-prefix">TICKET_ID~#</div>
               <input
                 ref={inputRef}
                 type="text"

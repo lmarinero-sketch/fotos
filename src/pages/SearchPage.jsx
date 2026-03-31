@@ -139,14 +139,14 @@ const SearchPage = () => {
               <ImageIcon size={48} />
             </div>
             <h2>No encontramos fotos</h2>
-            <p>Asegúrate de haber ingresado bien tu número de dorsal ({searchParams.get('bib')}).</p>
+            <p>Asegúrate de haber ingresado bien tu número de corredor ({searchParams.get('bib')}).</p>
           </div>
         ) : hasSearched && photos.length > 0 ? (
           <div className="results-container">
             <div className="results-header">
               <div className="results-title-group">
                 <h1 className="results-title">Tus Fotos Oficiales</h1>
-                <span className="results-badge">Dorsal {searchParams.get('bib')}</span>
+                <span className="results-badge">N° {searchParams.get('bib')}</span>
               </div>
               <p className="results-subtitle">Encontramos {photos.length} foto{photos.length > 1 ? 's' : ''} donde apareces. Compra el pack completo en alta resolución y sin marcas de agua.</p>
             </div>
@@ -190,7 +190,7 @@ const SearchPage = () => {
         ) : (
           <div className="search-initial">
             <ScannerIcon />
-            <h2>Busca tu Dorsal</h2>
+            <h2>Busca tus Fotos</h2>
             <p>Ingresa tu número de participante arriba para ver todas tus fotos.</p>
           </div>
         )}

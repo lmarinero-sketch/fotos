@@ -17,10 +17,55 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-// ── BuilderBot Cloud API ──
+// ── BuilderBot Cloud API con CORTAFUEGO ──
+// Límites: 8 msgs/phone/10min, 40 msgs totales/10min
 const sendWhatsAppMessage = async (phone: string, content: string, mediaUrl?: string) => {
   const botId = Deno.env.get('BUILDERBOT_BOT_ID')
   const apiKey = Deno.env.get('BUILDERBOT_API_KEY')
+
+  // ── CORTAFUEGO: Rate Limiter ──
+  try {
+    const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+    const tenMinAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString()
+
+    // Check per-phone limit (max 8 per 10 min)
+    const { count: phoneCount } = await sb
+      .from('chat_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('phone', phone)
+      .eq('direction', 'outgoing')
+      .gte('created_at', tenMinAgo)
+
+    if ((phoneCount || 0) >= 8) {
+      console.warn(`🚫 CORTAFUEGO: Bloqueado para ${phone} (${phoneCount} msgs en 10min)`)
+      await sb.from('system_errors').insert({
+        error_source: 'cortafuego-phone',
+        error_message: `Mensaje bloqueado: ${phoneCount} msgs en 10min para ${phone}`,
+        payload: { phone, content: content.substring(0, 100), phoneCount }
+      })
+      return
+    }
+
+    // Check global limit (max 40 total per 10 min)
+    const { count: globalCount } = await sb
+      .from('chat_messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('direction', 'outgoing')
+      .gte('created_at', tenMinAgo)
+
+    if ((globalCount || 0) >= 40) {
+      console.warn(`🚫 CORTAFUEGO GLOBAL: Bloqueado (${globalCount} msgs totales en 10min)`)
+      await sb.from('system_errors').insert({
+        error_source: 'cortafuego-global',
+        error_message: `Mensaje bloqueado: ${globalCount} msgs totales en 10min`,
+        payload: { phone, content: content.substring(0, 100), globalCount }
+      })
+      return
+    }
+  } catch (_rateErr) {
+    // Si falla el rate limiter, igual enviar (no bloquear por error de DB)
+    console.warn('Rate limiter check failed, proceeding anyway')
+  }
 
   const messages: Record<string, string> = { content }
   if (mediaUrl) messages.mediaUrl = mediaUrl
