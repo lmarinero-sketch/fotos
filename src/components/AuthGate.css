@@ -1,0 +1,357 @@
+/* ============================================
+   AuthGate — Login/Register Overlay
+   Design System: GrowLabs Ultra-Dark
+   ============================================ */
+
+/* ── Loading State ── */
+.auth-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #000;
+}
+
+.auth-spinner {
+  animation: spin 1s linear infinite;
+  color: var(--accent, #00E5FF);
+}
+
+/* ── Overlay ── */
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  overflow: hidden;
+}
+
+/* ── Background Auras ── */
+.auth-bg-aura {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(120px);
+  pointer-events: none;
+}
+
+.auth-bg-aura-1 {
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(0, 229, 255, 0.12), transparent 70%);
+  top: -15%;
+  right: -10%;
+}
+
+.auth-bg-aura-2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(0, 255, 136, 0.08), transparent 70%);
+  bottom: -10%;
+  left: -5%;
+}
+
+/* ── Card ── */
+.auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 1rem;
+  padding: 2.5rem 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 229, 255, 0.12);
+  border-radius: 20px;
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ── Logo ── */
+.auth-logo {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.auth-logo-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.auth-logo h1 {
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.auth-subtitle {
+  color: #607D8B;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  line-height: 1.4;
+}
+
+/* ── Tabs ── */
+.auth-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 0.6rem 0;
+  border: none;
+  background: transparent;
+  color: #607D8B;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-tab.active {
+  background: rgba(0, 229, 255, 0.1);
+  color: #00E5FF;
+}
+
+.auth-tab:hover:not(.active) {
+  color: #B0BEC5;
+}
+
+/* ── Form ── */
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* ── Field ── */
+.auth-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.auth-field-icon {
+  position: absolute;
+  left: 14px;
+  color: #607D8B;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 0.85rem 1rem 0.85rem 2.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #fff;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.auth-input::placeholder {
+  color: #4A5568;
+}
+
+.auth-input:focus {
+  border-color: rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.08);
+}
+
+/* ── Toggle Password ── */
+.auth-toggle-pw {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: #607D8B;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  transition: color 200ms;
+}
+
+.auth-toggle-pw:hover {
+  color: #B0BEC5;
+}
+
+/* ── Messages ── */
+.auth-error {
+  padding: 0.75rem 1rem;
+  background: rgba(255, 49, 49, 0.1);
+  border: 1px solid rgba(255, 49, 49, 0.25);
+  border-radius: 10px;
+  color: #FF6B6B;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.auth-success {
+  padding: 0.75rem 1rem;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.2);
+  border-radius: 10px;
+  color: #00FF88;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+/* ── Submit ── */
+.auth-submit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.9rem;
+  margin-top: 0.25rem;
+  background: #00E5FF;
+  color: #000;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 25px rgba(0, 229, 255, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.auth-submit:hover:not(:disabled) {
+  background: #00FFFF;
+  box-shadow: 0 0 40px rgba(0, 229, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+.auth-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── Footer ── */
+.auth-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.75rem;
+  color: #4A5568;
+}
+
+.auth-footer a {
+  color: #00E5FF;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+/* ── User Bar (when authenticated) ── */
+.auth-user-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(10, 14, 15, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(0, 229, 255, 0.08);
+  font-size: 0.8rem;
+}
+
+.auth-user-info {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: #607D8B;
+}
+
+.auth-user-info span {
+  color: #B0BEC5;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+}
+
+.auth-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #607D8B;
+  font-family: 'Montserrat', system-ui, sans-serif;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 200ms;
+}
+
+.auth-logout-btn:hover {
+  color: #FF6B6B;
+  border-color: rgba(255, 49, 49, 0.3);
+  background: rgba(255, 49, 49, 0.08);
+}
+
+/* ── Add padding to body when user bar is shown ── */
+body:has(.auth-user-bar) {
+  padding-top: 40px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .auth-card {
+    padding: 2rem 1.25rem;
+    margin: 0 0.75rem;
+    border-radius: 16px;
+  }
+
+  .auth-logo h1 {
+    font-size: 1.5rem;
+  }
+
+  .auth-logo-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* ── Animations ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
