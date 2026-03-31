@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage'
 import GalleryPage from './pages/GalleryPage'
 import PhotographerPanel from './pages/PhotographerPanel'
 import SearchPage from './pages/SearchPage'
+import CRMPage from './pages/CRMPage'
 import './App.css'
 
 const App = () => {
@@ -12,6 +13,7 @@ const App = () => {
         <Route path="/" element={<LandingPage />} />
         <Route path="/search" element={<SearchPage />} />
         <Route path="/upload" element={<PhotographerPanel />} />
+        <Route path="/crm" element={<CRMPage />} />
         <Route path="/:ticketCode" element={<GalleryPage />} />
       </Routes>
     </div>

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "f1717ec7-73b5-48de-8c39-660032b85c6b",
+    "name": "Prueba",
+    "slug": "prueba",
+    "photo_count": 10
+  },
+  {
+    "id": "f1b570e5-6edb-4e8c-9af8-23d83ca431dc",
+    "name": "Test2",
+    "slug": "test2",
+    "photo_count": 160
+  },
+  {
+    "id": "25a811f2-8b3a-4fb1-bd7a-0f75cae3652a",
+    "name": "Ironman 70.3 San Juan",
+    "slug": "ironman_703_san_juan",
+    "photo_count": 17
+  }
+]

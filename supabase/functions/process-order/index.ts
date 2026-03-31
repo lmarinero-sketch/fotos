@@ -100,6 +100,19 @@ Deno.serve(async (req) => {
     const clientName = body.data?.name || ''
     const cleanMsg = rawMessage.replace(/\*/g, '').trim()
 
+    // ── GUARDAR EN HISTORIAL CRM (aditivo, nunca bloquea) ──
+    try {
+      const chatSb = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
+      await chatSb.from('chat_messages').insert({
+        phone: clientPhone || 'unknown',
+        name: clientName || null,
+        direction: body.eventName === 'message.incoming' ? 'incoming' : 'outgoing',
+        body: rawMessage || null,
+        media_url: body.data?.attachment?.[0]?.url || body.data?.attachment?.[0]?.urltemp || null,
+        attachment: body.data?.attachment?.length ? body.data.attachment : null,
+      })
+    } catch (_chatErr) { /* silently continue — CRM history is non-critical */ }
+
     // ── ROUTER: Detect message type ──
 
     // 1) "Todo ok PD-XXXX" → Approve order
