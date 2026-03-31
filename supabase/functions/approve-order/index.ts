@@ -115,24 +115,26 @@ Deno.serve(async (req) => {
         .toLowerCase()
       const folderPath = `events/${slug}`
 
-      // List files in the event folder
-      const { data: storageFiles, error: listError } = await supabase
-        .storage
-        .from('photos')
-        .list(folderPath, { limit: 500 })
+      for (const photo of photosToSend) {
+        if (photo.storage_url) continue;
 
-      if (!listError && storageFiles?.length > 0) {
-        for (const photo of photosToSend) {
-          // Find matching file in storage
-          const match = storageFiles.find(f =>
-            f.name.toLowerCase().includes(photo.photo_name.toLowerCase().replace(/\.[^.]+$/, '')) ||
-            photo.photo_name.toLowerCase().includes(f.name.toLowerCase().replace(/\.[^.]+$/, ''))
-          )
+        const searchTerm = photo.photo_name.toLowerCase().replace(/\.[^.]+$/, '');
+        
+        const { data: searchResults, error: searchError } = await supabase
+          .storage
+          .from('photos')
+          .list(folderPath, { limit: 10, search: searchTerm });
+
+        if (!searchError && searchResults?.length > 0) {
+          const match = searchResults.find(f =>
+            f.name.toLowerCase().includes(searchTerm) ||
+            searchTerm.includes(f.name.toLowerCase().replace(/\.[^.]+$/, ''))
+          );
 
           if (match) {
-            const publicUrl = `${supabaseUrl}/storage/v1/object/public/photos/${folderPath}/${match.name}`
-            photo.storage_url = publicUrl
-            photo.file_size = match.metadata?.size || null
+            const publicUrl = `${supabaseUrl}/storage/v1/object/public/photos/${folderPath}/${match.name}`;
+            photo.storage_url = publicUrl;
+            photo.file_size = match.metadata?.size || null;
 
             // Update in DB
             await supabase
@@ -141,7 +143,7 @@ Deno.serve(async (req) => {
                 storage_url: publicUrl,
                 file_size: match.metadata?.size || null,
               })
-              .eq('id', photo.id)
+              .eq('id', photo.id);
           }
         }
       }

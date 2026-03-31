@@ -203,6 +203,8 @@ const PhotographerPanel = () => {
   const [uploadProgress, setUploadProgress] = useState({})
   const [uploadComplete, setUploadComplete] = useState(false)
   const [eventPhotos, setEventPhotos] = useState([])
+  const [photoOffset, setPhotoOffset] = useState(0)
+  const [hasMorePhotos, setHasMorePhotos] = useState(true)
 
   // Check session on mount
   useEffect(() => {
@@ -310,7 +312,9 @@ const PhotographerPanel = () => {
       setSelectedEvent(data)
       setView('workspace')
       setPanelTab('upload')
-      loadEventPhotos(data.slug)
+      setPhotoOffset(0)
+      setHasMorePhotos(true)
+      loadEventPhotos(data.slug, 0, false)
       loadEventOrders(data.name)
     }
     setCreatingEvent(false)
@@ -339,7 +343,9 @@ const PhotographerPanel = () => {
     setSelectedEvent(event)
     setView('workspace')
     setPanelTab('upload')
-    await loadEventPhotos(event.slug)
+    setPhotoOffset(0)
+    setHasMorePhotos(true)
+    await loadEventPhotos(event.slug, 0, false)
     await loadEventOrders(event.name)
   }
 
@@ -372,12 +378,21 @@ const PhotographerPanel = () => {
   }
 
   // ── Photos ──
-  const loadEventPhotos = async (slug) => {
+  const photosLimit = 50;
+  const loadEventPhotos = async (slug, currentOffset = 0, isAppend = false) => {
     const { data } = await supabase.storage
       .from('photos')
-      .list(`events/${slug}`, { limit: 10, sortBy: { column: 'name', order: 'asc' } })
+      .list(`events/${slug}`, { limit: photosLimit, offset: currentOffset, sortBy: { column: 'name', order: 'asc' } })
 
-    setEventPhotos(data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [])
+    const validPhotos = data?.filter(f => f.name !== '.emptyFolderPlaceholder') || [];
+    setEventPhotos(prev => isAppend ? [...prev, ...validPhotos] : validPhotos);
+    setHasMorePhotos(data?.length === photosLimit);
+  }
+
+  const handleLoadMorePhotos = () => {
+    const nextOffset = photoOffset + photosLimit;
+    setPhotoOffset(nextOffset);
+    loadEventPhotos(selectedEvent.slug, nextOffset, true);
   }
 
   const handleFileSelect = useCallback((e) => {
@@ -1071,7 +1086,7 @@ const PhotographerPanel = () => {
                 </div>
                 
                 <p style={{textAlign: 'center', color: '#8b949e', fontSize: '13px', marginBottom: '16px'}}>
-                  Mostrando solo las primeras 10 fotos para no sobrecargar el navegador de memoria.
+                  Mostrando tus fotos en páginas de a 50 archivos. {eventPhotos.length} fotos cargadas actualmente.
                 </p>
 
                 <div className="photos-grid">
@@ -1088,23 +1103,23 @@ const PhotographerPanel = () => {
                   })}
                 </div>
                 
-                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', paddingBottom: '30px' }}>
-                   <a 
-                     href="https://supabase.com/dashboard/project/pxvhovctyewwppwkldaq/storage/buckets/photos" 
-                     target="_blank" 
-                     rel="noreferrer"
-                     style={{
-                        backgroundColor: '#1E3A8A',
-                        color: 'white',
-                        padding: '12px 24px',
-                        borderRadius: '8px',
-                        textDecoration: 'none',
-                        fontWeight: 'bold',
-                        letterSpacing: '1px'
-                     }}
-                   >
-                     VER TODAS LAS FOTOS EN SUPABASE
-                   </a>
+                <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px', paddingBottom: '30px', flexDirection: 'column', alignItems: 'center', gap: '15px' }}>
+                   {hasMorePhotos && (
+                     <button
+                       onClick={handleLoadMorePhotos}
+                       style={{
+                          backgroundColor: 'transparent',
+                          color: '#00FF88',
+                          border: '1px solid #00FF88',
+                          padding: '10px 20px',
+                          borderRadius: '8px',
+                          cursor: 'pointer',
+                          fontWeight: 'bold',
+                       }}
+                     >
+                       CARGAR MÁS FOTOS
+                     </button>
+                   )}
                 </div>
               </>
             )}
