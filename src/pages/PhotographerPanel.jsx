@@ -441,7 +441,7 @@ const PhotographerPanel = () => {
 
           // 3. Subir Original (ahora más rápido y consumiendo mitad de ancho de banda)
           const uploadPromises = [
-            supabase.storage.from('photos').upload(filePath, file, { cacheControl: '3600', upsert: true }),
+            supabase.storage.from('photos').upload(filePath, file, { cacheControl: '3600', upsert: false }),
           ];
           
           const [originalRes] = await Promise.all(uploadPromises);
@@ -675,17 +675,10 @@ const PhotographerPanel = () => {
                     <div className="event-info">
                       <span className="event-name">{event.name}</span>
                       <span className="event-meta">
-                        {event.photo_count || 0} fotos · {new Date(event.created_at).toLocaleDateString('es-AR')}
+                        {new Date(event.created_at).toLocaleDateString('es-AR')}
                       </span>
                     </div>
                     <div className="event-actions">
-                      <button
-                        className="btn-icon-danger"
-                        onClick={(e) => deleteEvent(event, e)}
-                        aria-label="Eliminar evento"
-                      >
-                        <Trash2 size={16} />
-                      </button>
                       <ChevronRight size={18} className="event-chevron" />
                     </div>
                   </div>
@@ -843,7 +836,6 @@ const PhotographerPanel = () => {
         <div className="panel-brand">
           <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="brand-logo" />
           <div className="brand-badge-row">
-            <span className="brand-tag">{selectedEvent?.photo_count || 0} FOTOS</span>
             <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
               <X size={20} />
             </button>
@@ -1075,7 +1067,7 @@ const PhotographerPanel = () => {
             {eventPhotos.length > 0 && (
               <>
                 <div className="section-divider">
-                  <span>Fotos subidas ({selectedEvent?.photo_count || eventPhotos.length})</span>
+                  <span>Fotos subidas</span>
                 </div>
                 
                 <p style={{textAlign: 'center', color: '#8b949e', fontSize: '13px', marginBottom: '16px'}}>
@@ -1090,13 +1082,6 @@ const PhotographerPanel = () => {
                         <img src={publicUrl} alt={photo.name} loading="lazy" />
                         <div className="photo-overlay">
                           <span className="photo-name-label">{photo.name}</span>
-                          <button
-                            className="photo-delete"
-                            onClick={() => deletePhoto(photo)}
-                            aria-label="Eliminar foto"
-                          >
-                            <Trash2 size={14} />
-                          </button>
                         </div>
                       </div>
                     )
@@ -1118,7 +1103,7 @@ const PhotographerPanel = () => {
                         letterSpacing: '1px'
                      }}
                    >
-                     VER TODAS LAS FOTOS ({selectedEvent?.photo_count || 0}) EN SUPABASE
+                     VER TODAS LAS FOTOS EN SUPABASE
                    </a>
                 </div>
               </>
