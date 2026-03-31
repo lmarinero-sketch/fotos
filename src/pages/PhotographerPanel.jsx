@@ -258,27 +258,8 @@ const PhotographerPanel = () => {
       .select('*')
       .order('created_at', { ascending: false })
 
-    // Auto-sync photo count using the true count from 'fotos' table
-    if (data && data.length > 0) {
-      setTimeout(async () => {
-        const updated = [...data]
-        let changed = false
-        for (let idx = 0; idx < updated.length; idx++) {
-          const ev = updated[idx]
-          const { count, error } = await supabase
-            .from('fotos')
-            .select('*', { count: 'exact', head: true })
-            .eq('event_id', ev.id)
-            
-          if (!error && count !== null && ev.photo_count !== count) {
-            await supabase.from('events').update({ photo_count: count }).eq('id', ev.id)
-            updated[idx].photo_count = count
-            changed = true
-          }
-        }
-        if (changed) setEvents(updated)
-      }, 500)
-    }
+    // El photo_count real se actualiza localmente o por scripts externos (ej: 20000+)
+    // Removida auto-sincronización porque la API de Storage limita a 1000 y aplasta el conteo real.
 
     setEvents(data || [])
   }
@@ -596,12 +577,9 @@ const PhotographerPanel = () => {
         <aside className={`panel-sidebar ${isSidebarOpen ? 'open' : ''}`}>
           <div className="panel-brand">
             <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="brand-logo" />
-            <div className="brand-badge-row">
-              <span className="brand-tag">Fotógrafo Central</span>
-              <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
-                <X size={20} />
-              </button>
-            </div>
+            <button className="sidebar-close" onClick={() => setIsSidebarOpen(false)}>
+              <X size={20} />
+            </button>
           </div>
           <div className="event-tabs">
             <button className={`tab-btn ${dashboardTab === 'events' ? 'active' : ''}`} onClick={() => { setDashboardTab('events'); setIsSidebarOpen(false) }}>

@@ -210,8 +210,9 @@
 
 .panel-brand {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--space-8);
 }
 
@@ -230,10 +231,10 @@
 }
 
 .brand-logo {
-  height: 32px;
-  width: auto;
-  align-self: flex-start;
-  filter: drop-shadow(0 0 8px rgba(0, 229, 255, 0.2));
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  filter: drop-shadow(0 0 12px rgba(0, 255, 136, 0.4));
 }
 
 .brand-tag {
