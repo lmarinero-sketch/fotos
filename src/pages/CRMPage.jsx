@@ -47,6 +47,15 @@ const formatDate = (iso) => {
 
 const formatPrice = (p) => new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(p)
 
+// Limpiar body de mensajes con IDs internos de BuilderBot
+const cleanBody = (body) => {
+  if (!body) return null
+  if (body.startsWith('_event_media_')) return '📷 Imagen'
+  if (body.startsWith('_event_voice_note_')) return '🎤 Audio'
+  if (body.startsWith('_event_document_')) return '📄 Documento'
+  return body
+}
+
 // ═══════════════════════════════════════
 // CRM CHAT COMPONENT (embeddable)
 // ═══════════════════════════════════════
@@ -71,7 +80,6 @@ export default function CRMChat() {
       .from('chat_messages')
       .select('phone, name, body, created_at, direction, is_read')
       .order('created_at', { ascending: false })
-      .limit(5000)
 
     if (!msgs) return
 
@@ -81,7 +89,7 @@ export default function CRMChat() {
       if (!map.has(msg.phone)) {
         map.set(msg.phone, {
           phone: msg.phone, name: msg.name || msg.phone,
-          lastMessage: msg.body || '📎 Adjunto',
+          lastMessage: cleanBody(msg.body) || '📎 Adjunto',
           lastMessageTime: msg.created_at,
           unread: 0, hasOrder: false, orderStatus: null, ticketCode: null,
         })
@@ -103,7 +111,7 @@ export default function CRMChat() {
   // ── Fetch messages ──
   const fetchMessages = useCallback(async (phone) => {
     if (!phone) return
-    const { data } = await supabase.from('chat_messages').select('*').eq('phone', phone).order('created_at', { ascending: true }).limit(500)
+    const { data } = await supabase.from('chat_messages').select('*').eq('phone', phone).order('created_at', { ascending: true })
     setMessages(data || [])
     await supabase.from('chat_messages').update({ is_read: true }).eq('phone', phone).eq('direction', 'incoming').eq('is_read', false)
   }, [])
@@ -240,7 +248,7 @@ export default function CRMChat() {
                 return (
                   <div key={item.id || i} className={`crm-msg ${item.direction}`}>
                     {item.media_url && <img src={item.media_url} className="crm-msg-media" alt="" onClick={() => window.open(item.media_url, '_blank')} loading="lazy" />}
-                    {item.body && <div className="crm-msg-body">{item.body}</div>}
+                    {item.body && <div className="crm-msg-body">{cleanBody(item.body)}</div>}
                     <div className="crm-msg-time">{formatMsgTime(item.created_at)}</div>
                   </div>
                 )

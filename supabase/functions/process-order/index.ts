@@ -105,39 +105,42 @@ Deno.serve(async (req) => {
       const chatSb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
       let permanentMediaUrl: string | null = null
 
-      // Si hay adjunto (imagen), descargar de URL temporal y subir a nuestro Storage
-      const attachment = body.data?.attachment
-      if (attachment && attachment.length > 0) {
-        const tempUrl = attachment[0].urltemp || attachment[0].url
-        if (tempUrl) {
-          try {
-            const mediaResp = await fetch(tempUrl)
-            if (mediaResp.ok) {
-              const blob = await mediaResp.blob()
-              const ext = attachment[0].type === 'image' ? 'jpg'
-                        : attachment[0].type === 'video' ? 'mp4'
-                        : attachment[0].type === 'audio' ? 'ogg'
-                        : 'bin'
-              const fileName = `chat-media/${clientPhone}/${Date.now()}.${ext}`
-              await chatSb.storage.from('photos').upload(fileName, blob, {
-                contentType: blob.type || 'image/jpeg',
-                cacheControl: '31536000',
-                upsert: true
-              })
-              const { data: urlData } = chatSb.storage.from('photos').getPublicUrl(fileName)
-              permanentMediaUrl = urlData.publicUrl
-            }
-          } catch (_dlErr) {
-            // Si falla la descarga, guardamos la URL temporal como fallback
-            permanentMediaUrl = tempUrl
+      // BuilderBot envía las URLs temporales en "urlsTempsFiles" (array de strings)
+      const urlsTemps: string[] = body.data?.urlsTempsFiles || []
+      const attachment = body.data?.attachment || []
+
+      if (urlsTemps.length > 0) {
+        const tempUrl = urlsTemps[0]
+        try {
+          const mediaResp = await fetch(tempUrl)
+          if (mediaResp.ok) {
+            const blob = await mediaResp.blob()
+            // Detectar extensión del nombre de archivo o del content-type
+            const attachName = typeof attachment[0] === 'string' ? attachment[0] : ''
+            const ext = attachName.split('.').pop() || 'jpg'
+            const fileName = `chat-media/${clientPhone}/${Date.now()}.${ext}`
+            await chatSb.storage.from('photos').upload(fileName, blob, {
+              contentType: blob.type || 'application/octet-stream',
+              cacheControl: '31536000',
+              upsert: true
+            })
+            const { data: urlData } = chatSb.storage.from('photos').getPublicUrl(fileName)
+            permanentMediaUrl = urlData.publicUrl
           }
+        } catch (_dlErr) {
+          // Fallback: guardar URL temporal
+          permanentMediaUrl = tempUrl
         }
       }
 
-      // Limpiar body: si el mensaje es solo un ID de media interno, dejarlo vacío
+      // Limpiar body: reemplazar IDs internos de BuilderBot
       let cleanBody = rawMessage || null
-      if (cleanBody && cleanBody.startsWith('_event_media_')) {
-        cleanBody = permanentMediaUrl ? '📷 Imagen' : cleanBody
+      if (cleanBody && (cleanBody.startsWith('_event_media_') || cleanBody.startsWith('_event_voice_note_') || cleanBody.startsWith('_event_document_'))) {
+        if (permanentMediaUrl) {
+          const isVoice = cleanBody.startsWith('_event_voice_note_')
+          const isDoc = cleanBody.startsWith('_event_document_')
+          cleanBody = isVoice ? '🎤 Audio' : isDoc ? '📄 Documento' : '📷 Imagen'
+        }
       }
 
       await chatSb.from('chat_messages').insert({
@@ -146,7 +149,7 @@ Deno.serve(async (req) => {
         direction: body.eventName === 'message.incoming' ? 'incoming' : 'outgoing',
         body: cleanBody,
         media_url: permanentMediaUrl,
-        attachment: attachment?.length ? attachment : null,
+        attachment: attachment.length ? attachment : null,
       })
     } catch (_chatErr) { /* silently continue — CRM history is non-critical */ }
 

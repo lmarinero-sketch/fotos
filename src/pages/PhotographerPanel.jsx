@@ -573,13 +573,7 @@ const PhotographerPanel = () => {
             <button type="submit" className="login-btn" disabled={authLoading}>
               {authLoading ? <Loader2 size={18} className="spin" /> : (authMode === 'login' ? 'Ingresar' : 'Registrarse')}
             </button>
-            <button
-              type="button"
-              className="login-toggle"
-              onClick={() => { setAuthMode(authMode === 'login' ? 'signup' : 'login'); setAuthError('') }}
-            >
-              {authMode === 'login' ? '¿No tenés cuenta? Registrate' : '¿Ya tenés cuenta? Ingresá'}
-            </button>
+
             {authError && <p className={`login-error ${authError.startsWith('✅') ? 'success' : ''}`}>{authError}</p>}
           </form>
         </div>
