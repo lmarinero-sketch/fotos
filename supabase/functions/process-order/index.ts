@@ -240,7 +240,6 @@ Deno.serve(async (req) => {
         .single()
 
       if (!existingOrder) {
-        await sendWhatsAppMessage(clientPhone, `⚠️ No encontré el pedido ${ticketCode}. Verificá el código.`)
         return new Response(
           JSON.stringify({ skip: true, reason: 'Order not found for Todo ok', ticket: ticketCode }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -249,7 +248,6 @@ Deno.serve(async (req) => {
 
       // Si ya fue entregado, NO volver a procesar
       if (existingOrder.status === 'delivered') {
-        await sendWhatsAppMessage(clientPhone, `✅ El pedido ${ticketCode} ya fue entregado anteriormente.`)
         return new Response(
           JSON.stringify({ skip: true, reason: 'Already delivered', ticket: ticketCode }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -258,7 +256,6 @@ Deno.serve(async (req) => {
 
       // Si está en proceso de envío, NO duplicar
       if (existingOrder.status === 'sending') {
-        await sendWhatsAppMessage(clientPhone, `⏳ El pedido ${ticketCode} ya está siendo procesado. Esperá unos minutos.`)
         return new Response(
           JSON.stringify({ skip: true, reason: 'Already sending', ticket: ticketCode }),
           { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -270,7 +267,7 @@ Deno.serve(async (req) => {
         .update({ status: 'sending' })
         .eq('id', existingOrder.id)
 
-      await sendWhatsAppMessage(clientPhone, `⏳ Procesando entrega del ticket ${ticketCode}...`)
+      // No enviar mensaje de "procesando" — approve-order ya envía el link directamente
 
       try {
         const approveRes = await fetch(

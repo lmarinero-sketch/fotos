@@ -194,14 +194,8 @@ Deno.serve(async (req) => {
       })
       .eq('id', order.id)
 
-    // ── 7. Notify photographer ──
-    await sendWhatsAppMessage(
-      order.photographer_phone || Deno.env.get('PHOTOGRAPHER_PHONE'),
-      `✅ Pedido ${ticket_code} entregado\n` +
-      `${totalPhotos} fotos disponibles en la galería\n` +
-      `Evento: ${order.event_name}\n\n` +
-      `Link enviado al cliente: https://jerpro.vercel.app/${ticket_code}`
-    )
+    // Notificación al fotógrafo eliminada — ya sabe que aprobó el pedido.
+    // Cada mensaje menos = menos riesgo de bloqueo de WhatsApp.
 
     return new Response(
       JSON.stringify({
