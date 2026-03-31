@@ -1,0 +1,53 @@
+[
+  {
+    "id": "f54145f3-199c-4ceb-923c-310899c9cb97",
+    "created_at": "2026-03-30T23:26:30.929397+00:00",
+    "error_source": "process-order",
+    "error_message": "Parse error: Could not identify event name or photos",
+    "payload": {
+      "rawMessage": "https://www.misfotos.click/evento/jerpro-045/jerpro",
+      "parsedEvent": "",
+      "parsedPhotos": []
+    }
+  },
+  {
+    "id": "ac92d1a8-6467-498a-99f0-aaa0a845b48a",
+    "created_at": "2026-03-30T23:04:41.02803+00:00",
+    "error_source": "process-order-approve-call",
+    "error_message": "approve-order returned 401: {\"code\":401,\"message\":\"Invalid Token or Protected Header formatting\"}",
+    "payload": {
+      "ticketCode": "PD-6170",
+      "clientPhone": "5492645438114"
+    }
+  },
+  {
+    "id": "c3fc92ed-02c7-4783-9db6-d74bf024e51b",
+    "created_at": "2026-03-30T21:18:17.087456+00:00",
+    "error_source": "process-order-approve-call",
+    "error_message": "approve-order returned 404: {\"error\":\"No photos found in storage\",\"missing\":[\"AND_0011.jpg\",\"AND_0013.jpg\"]}",
+    "payload": {
+      "ticketCode": "PD-6675",
+      "clientPhone": "5492645438114"
+    }
+  },
+  {
+    "id": "95f3ca6f-a86c-428c-a273-f0b3ede0a140",
+    "created_at": "2026-03-30T21:18:11.771374+00:00",
+    "error_source": "process-order-approve-call",
+    "error_message": "approve-order returned 404: {\"error\":\"No photos found in storage\",\"missing\":[\"AND_0011.jpg\",\"AND_0013.jpg\"]}",
+    "payload": {
+      "ticketCode": "PD-6675",
+      "clientPhone": "5492645438114"
+    }
+  },
+  {
+    "id": "ceaa8823-8473-4f38-8530-baa0c824d02b",
+    "created_at": "2026-03-30T21:18:08.359268+00:00",
+    "error_source": "process-order-approve-call",
+    "error_message": "approve-order returned 404: {\"error\":\"No photos found in storage\",\"missing\":[\"AND_0011.jpg\",\"AND_0013.jpg\"]}",
+    "payload": {
+      "ticketCode": "PD-6675",
+      "clientPhone": "5492645438114"
+    }
+  }
+]

@@ -258,21 +258,22 @@ const PhotographerPanel = () => {
       .select('*')
       .order('created_at', { ascending: false })
 
-    // Auto-sync photo count for manual uploads (test2 bug fix)
+    // Auto-sync photo count using the true count from 'fotos' table
     if (data && data.length > 0) {
       setTimeout(async () => {
         const updated = [...data]
         let changed = false
         for (let idx = 0; idx < updated.length; idx++) {
           const ev = updated[idx]
-          if (ev.photo_count === 0 || !ev.photo_count) {
-             const { data: files } = await supabase.storage.from('photos').list(`events/${ev.slug}`, { limit: 1000 })
-             const realCount = (files || []).filter(f => f.name !== '.emptyFolderPlaceholder').length
-             if (realCount > 0 && ev.photo_count !== realCount) {
-                await supabase.from('events').update({ photo_count: realCount }).eq('id', ev.id)
-                updated[idx].photo_count = realCount
-                changed = true
-             }
+          const { count, error } = await supabase
+            .from('fotos')
+            .select('*', { count: 'exact', head: true })
+            .eq('event_id', ev.id)
+            
+          if (!error && count !== null && ev.photo_count !== count) {
+            await supabase.from('events').update({ photo_count: count }).eq('id', ev.id)
+            updated[idx].photo_count = count
+            changed = true
           }
         }
         if (changed) setEvents(updated)
@@ -552,7 +553,6 @@ const PhotographerPanel = () => {
       <div className="panel-container">
         <div className="panel-login">
           <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="panel-login-logo" />
-          <h1>JERPRO</h1>
           <p>Panel del fotógrafo</p>
           <form onSubmit={handleAuth} className="login-form">
             <input
