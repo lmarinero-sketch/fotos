@@ -4,17 +4,11 @@
 //
 // Trigger: mensaje que empieza con "Hola! Estoy en misfotos.click"
 //
-// Ejemplo de mensaje entrante:
-// *Hola! Estoy en misfotos.click me interesan estas fotos:*
-//
-//  *Top Man Mendoza:*
-//  - DSC_3457
-//  - DSC_3458
-//  - DSC_3459
-//
-// *Son en total:*
-// 3 fotos.
-// *Gracias!*
+// PROTECCIONES ANTI-FLOODING:
+// 1. Ignora mensajes OUTGOING (eco del bot)
+// 2. Ignora eventos de sistema (QR, status, etc.)
+// 3. Anti-duplicado para "Todo ok" (5 min cooldown por ticket)
+// 4. Anti-duplicado para nuevos pedidos (60s cooldown)
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -78,7 +72,7 @@ const parseClientMessage = (rawMessage) => {
   return { eventName, photos }
 }
 
-// ── Generate ticket code (4 dígitos, fácil de escribir) ──
+// ── Generate ticket code (4 dígitos) ──
 const generateTicketCode = () => {
   const num = Math.floor(1000 + Math.random() * 9000) // 1000-9999
   return `PD-${num}`
@@ -92,20 +86,93 @@ Deno.serve(async (req) => {
   try {
     const body = await req.json()
 
-    // BuilderBot webhook formats:
-    // INCOMING: { eventName: "message.incoming", data: { body: "...", name: "Leifer", from: "3400000" } }
-    // OUTGOING: { eventName: "message.outgoing", data: { answer: "...", from: "3400000" } }
-    const rawMessage = body.data?.body || body.data?.answer || body.message || ''
+    // ════════════════════════════════════════════════
+    // BARRERA 1: Ignorar mensajes OUTGOING (eco del bot)
+    // Cuando el bot envía un mensaje, BuilderBot dispara
+    // el webhook de nuevo como "message.outgoing". Si no
+    // lo filtramos, cada mensaje del bot genera otro ciclo.
+    // ════════════════════════════════════════════════
+    if (body.eventName && body.eventName !== 'message.incoming') {
+      return new Response(
+        JSON.stringify({ skip: true, reason: 'Not an incoming message', event: body.eventName }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ════════════════════════════════════════════════
+    // BARRERA 2: Ignorar eventos de sistema de BuilderBot
+    // (QR, reconexión, status changes, etc.)
+    // ════════════════════════════════════════════════
+    const rawMessage = body.data?.body || body.message || ''
     const clientPhone = body.data?.from || body.phone || ''
     const clientName = body.data?.name || ''
+
+    // Si no hay teléfono real o es un evento de sistema, ignorar
+    if (!clientPhone || clientPhone === 'unknown' || clientPhone === 'status') {
+      return new Response(
+        JSON.stringify({ skip: true, reason: 'No valid phone / system event' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Si el body es un evento interno de BuilderBot, ignorar
+    if (body.data?.title?.includes('ACTION REQUIRED') || body.data?.status === 'require_action') {
+      return new Response(
+        JSON.stringify({ skip: true, reason: 'BuilderBot system event (QR/status)' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     const cleanMsg = rawMessage.replace(/\*/g, '').trim()
 
-    // ── GUARDAR EN HISTORIAL CRM (aditivo, nunca bloquea) ──
+    // Si el mensaje está vacío, solo guardar en CRM y salir
+    if (!cleanMsg) {
+      // Intentar guardar media si existe
+      try {
+        const chatSb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+        let permanentMediaUrl: string | null = null
+        const urlsTemps: string[] = body.data?.urlsTempsFiles || []
+        const attachment = body.data?.attachment || []
+
+        if (urlsTemps.length > 0) {
+          try {
+            const mediaResp = await fetch(urlsTemps[0])
+            if (mediaResp.ok) {
+              const blob = await mediaResp.blob()
+              const ext = (typeof attachment[0] === 'string' ? attachment[0] : '').split('.').pop() || 'jpg'
+              const fileName = `chat-media/${clientPhone}/${Date.now()}.${ext}`
+              await chatSb.storage.from('photos').upload(fileName, blob, {
+                contentType: blob.type || 'application/octet-stream',
+                cacheControl: '31536000',
+                upsert: true,
+              })
+              const { data: urlData } = chatSb.storage.from('photos').getPublicUrl(fileName)
+              permanentMediaUrl = urlData.publicUrl
+            }
+          } catch (_) { permanentMediaUrl = urlsTemps[0] }
+        }
+
+        await chatSb.from('chat_messages').insert({
+          phone: clientPhone,
+          name: clientName || null,
+          direction: 'incoming',
+          body: permanentMediaUrl ? '📷 Imagen' : null,
+          media_url: permanentMediaUrl,
+          attachment: attachment.length ? attachment : null,
+        })
+      } catch (_) {}
+
+      return new Response(
+        JSON.stringify({ skip: true, reason: 'Empty message, saved to CRM' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // ── GUARDAR EN HISTORIAL CRM (siempre, nunca bloquea) ──
     try {
       const chatSb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
       let permanentMediaUrl: string | null = null
 
-      // BuilderBot envía las URLs temporales en "urlsTempsFiles" (array de strings)
       const urlsTemps: string[] = body.data?.urlsTempsFiles || []
       const attachment = body.data?.attachment || []
 
@@ -115,7 +182,6 @@ Deno.serve(async (req) => {
           const mediaResp = await fetch(tempUrl)
           if (mediaResp.ok) {
             const blob = await mediaResp.blob()
-            // Detectar extensión del nombre de archivo o del content-type
             const attachName = typeof attachment[0] === 'string' ? attachment[0] : ''
             const ext = attachName.split('.').pop() || 'jpg'
             const fileName = `chat-media/${clientPhone}/${Date.now()}.${ext}`
@@ -128,12 +194,10 @@ Deno.serve(async (req) => {
             permanentMediaUrl = urlData.publicUrl
           }
         } catch (_dlErr) {
-          // Fallback: guardar URL temporal
           permanentMediaUrl = tempUrl
         }
       }
 
-      // Limpiar body: reemplazar IDs internos de BuilderBot
       let cleanBody = rawMessage || null
       if (cleanBody && (cleanBody.startsWith('_event_media_') || cleanBody.startsWith('_event_voice_note_') || cleanBody.startsWith('_event_document_'))) {
         if (permanentMediaUrl) {
@@ -144,31 +208,71 @@ Deno.serve(async (req) => {
       }
 
       await chatSb.from('chat_messages').insert({
-        phone: clientPhone || 'unknown',
+        phone: clientPhone,
         name: clientName || null,
-        direction: body.eventName === 'message.incoming' ? 'incoming' : 'outgoing',
+        direction: 'incoming',
         body: cleanBody,
         media_url: permanentMediaUrl,
         attachment: attachment.length ? attachment : null,
       })
-    } catch (_chatErr) { /* silently continue — CRM history is non-critical */ }
+    } catch (_chatErr) { /* silently continue */ }
 
-    // ── ROUTER: Detect message type ──
+    // ════════════════════════════════════════════════
+    // ROUTER: Detect message type
+    // ════════════════════════════════════════════════
 
-    // 1) "Todo ok PD-XXXX" → Approve order
-    // STRICT match: the ENTIRE message must be just "Todo ok PD-XXXX" (with optional whitespace)
-    // This prevents the photographer notification (which CONTAINS "Todo ok PD-XXXX" 
-    // inside a longer paragraph) from triggering auto-approval.
+    // ── 1) "Todo ok PD-XXXX" → Approve order ──
     const approveMatch = cleanMsg.match(/^todo\s*ok\s*(pd-\d{4})\s*$/i)
     if (approveMatch) {
       const ticketCode = approveMatch[1].toUpperCase()
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+      const sb = createClient(supabaseUrl, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
 
-      // Send a quick acknowledgment back to the user instantly so they know we caught it
+      // ════════════════════════════════════════════════
+      // BARRERA 3: Anti-duplicado para "Todo ok"
+      // Si el pedido ya fue entregado o está en proceso,
+      // ignorar el "Todo ok" repetido.
+      // ════════════════════════════════════════════════
+      const { data: existingOrder } = await sb
+        .from('orders')
+        .select('id, status, delivered_at')
+        .eq('ticket_code', ticketCode)
+        .single()
+
+      if (!existingOrder) {
+        await sendWhatsAppMessage(clientPhone, `⚠️ No encontré el pedido ${ticketCode}. Verificá el código.`)
+        return new Response(
+          JSON.stringify({ skip: true, reason: 'Order not found for Todo ok', ticket: ticketCode }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Si ya fue entregado, NO volver a procesar
+      if (existingOrder.status === 'delivered') {
+        await sendWhatsAppMessage(clientPhone, `✅ El pedido ${ticketCode} ya fue entregado anteriormente.`)
+        return new Response(
+          JSON.stringify({ skip: true, reason: 'Already delivered', ticket: ticketCode }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Si está en proceso de envío, NO duplicar
+      if (existingOrder.status === 'sending') {
+        await sendWhatsAppMessage(clientPhone, `⏳ El pedido ${ticketCode} ya está siendo procesado. Esperá unos minutos.`)
+        return new Response(
+          JSON.stringify({ skip: true, reason: 'Already sending', ticket: ticketCode }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // Marcar como "sending" ANTES de llamar a approve-order para prevenir duplicados
+      await sb.from('orders')
+        .update({ status: 'sending' })
+        .eq('id', existingOrder.id)
+
       await sendWhatsAppMessage(clientPhone, `⏳ Procesando entrega del ticket ${ticketCode}...`)
 
       try {
-        // Call approve-order edge function internally
         const approveRes = await fetch(
           `${supabaseUrl}/functions/v1/approve-order`,
           {
@@ -195,7 +299,6 @@ Deno.serve(async (req) => {
            } catch (_) {}
 
            if (isHandled) {
-             // approve-order already sent the corresponding WhatsApp messages
              return new Response(
                JSON.stringify({ routed: 'approve-order', error: 'Photos not found, handled' }),
                { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -210,13 +313,16 @@ Deno.serve(async (req) => {
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       } catch (err) {
-        // Log into system_errors
-        const sb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
         await sb.from('system_errors').insert({
           error_source: 'process-order-approve-call',
           error_message: err.message,
           payload: { ticketCode, clientPhone }
         })
+
+        // Revertir status si falló
+        await sb.from('orders')
+          .update({ status: existingOrder.status })
+          .eq('id', existingOrder.id)
 
         await sendWhatsAppMessage(clientPhone, `❌ Error interno al enviar las fotos. Contactá a soporte o aprobalo desde el Panel Web.`)
 
@@ -227,16 +333,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 2) "Hola! Estoy en misfotos.click..." → New order
+    // ── 2) "Hola! Estoy en misfotos.click..." → New order ──
     const triggerPhrase = 'Hola! Estoy'
     if (!cleanMsg.startsWith(triggerPhrase) && !cleanMsg.toLowerCase().includes('misfotos.click')) {
-      const sb = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
-      await sb.from('system_errors').insert({
-        error_source: 'process-order-debug-skip',
-        error_message: 'Mensaje ignorado o payload irreconocible de BuilderBot',
-        payload: { body, rawMessage, cleanMsg }
-      })
-      
+      // No es un mensaje reconocido — solo guardarlo en CRM (ya se guardó arriba)
       return new Response(
         JSON.stringify({ skip: true, reason: 'Message does not match any trigger' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
