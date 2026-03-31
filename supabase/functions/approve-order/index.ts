@@ -214,17 +214,9 @@ Deno.serve(async (req) => {
       )
     }
 
-    // ── 5. Send ONLY the gallery link (no photo flooding) ──
-    await sendWhatsAppMessage(
-      order.client_phone,
-      `📥 *PARA NO PERDER CALIDAD:*\n` +
-      `Descargalas en su resolución original (HD sin la compresión de WhatsApp) desde tu galería privada:\n\n` +
-      `👉 https://jerpro.vercel.app/${ticket_code}\n\n` +
-      `¡Que las disfrutes! ✨\n\n` +
-      `Automatización hecha por Grow Labs, visitanos en www.growlabs.lat`
-    )
-
-    // ── 6. Update status to delivered ──
+    // ── 5. Update status to delivered FIRST (before any message send) ──
+    // Esto garantiza que el pedido se marca como entregado aunque
+    // WhatsApp esté bloqueado y el send falle.
     await supabase
       .from('orders')
       .update({
@@ -236,8 +228,22 @@ Deno.serve(async (req) => {
       })
       .eq('id', order.id)
 
-    // Notificación al fotógrafo eliminada — ya sabe que aprobó el pedido.
-    // Cada mensaje menos = menos riesgo de bloqueo de WhatsApp.
+    // ── 6. TRY to send gallery link (don't fail if WhatsApp is blocked) ──
+    const galleryLink = `https://jerpro.vercel.app/${ticket_code}`
+    const galleryMessage = 
+      `📥 *PARA NO PERDER CALIDAD:*\n` +
+      `Descargalas en su resolución original (HD sin la compresión de WhatsApp) desde tu galería privada:\n\n` +
+      `👉 ${galleryLink}\n\n` +
+      `¡Que las disfrutes! ✨\n\n` +
+      `Automatización hecha por Grow Labs, visitanos en www.growlabs.lat`
+
+    let messageSent = false
+    try {
+      await sendWhatsAppMessage(order.client_phone, galleryMessage)
+      messageSent = true
+    } catch (_sendErr) {
+      console.warn(`⚠️ No se pudo enviar mensaje a ${order.client_phone} (WhatsApp bloqueado?)`)
+    }
 
     return new Response(
       JSON.stringify({
@@ -246,6 +252,9 @@ Deno.serve(async (req) => {
         photos_resolved: totalPhotos,
         missing_photos: missingPhotos.length,
         delivery_method: 'gallery_link_only',
+        gallery_link: galleryLink,
+        gallery_message: galleryMessage,
+        message_sent: messageSent,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

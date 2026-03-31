@@ -133,15 +133,20 @@ Deno.serve(async (req) => {
 
     // ════════════════════════════════════════════════
     // BARRERA 1: Ignorar mensajes OUTGOING (eco del bot)
-    // Cuando el bot envía un mensaje, BuilderBot dispara
-    // el webhook de nuevo como "message.outgoing". Si no
-    // lo filtramos, cada mensaje del bot genera otro ciclo.
+    // EXCEPCIÓN: "todo ok PD-XXXX" del fotógrafo se permite
+    // porque es un comando de aprobación, no un eco.
     // ════════════════════════════════════════════════
     if (body.eventName && body.eventName !== 'message.incoming') {
-      return new Response(
-        JSON.stringify({ skip: true, reason: 'Not an incoming message', event: body.eventName }),
-        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
+      const outgoingBody = (body.data?.body || body.message || '').replace(/\*/g, '').trim()
+      const isTodoOk = /^todo\s*ok\s*(pd-\d{4})\s*$/i.test(outgoingBody)
+      
+      if (!isTodoOk) {
+        return new Response(
+          JSON.stringify({ skip: true, reason: 'Not an incoming message', event: body.eventName }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      // Si es "todo ok", dejamos que continúe al router
     }
 
     // ════════════════════════════════════════════════
@@ -350,6 +355,30 @@ Deno.serve(async (req) => {
         }
 
         const approveResult = await approveRes.json()
+
+        // Si approve-order no pudo enviar el mensaje (WhatsApp bloqueado),
+        // enviamos el link de galería directamente al chat del cliente
+        if (approveResult.gallery_link && !approveResult.message_sent) {
+          try {
+            // Buscar el client_phone del pedido para enviar por el mismo canal
+            const { data: orderData } = await sb
+              .from('orders')
+              .select('client_phone')
+              .eq('ticket_code', ticketCode)
+              .single()
+
+            if (orderData?.client_phone) {
+              await sendWhatsAppMessage(
+                orderData.client_phone,
+                approveResult.gallery_message || 
+                `📥 Tus fotos están listas!\n\n👉 ${approveResult.gallery_link}\n\n¡Que las disfrutes! ✨`
+              )
+            }
+          } catch (_linkErr) {
+            console.warn('Could not send gallery link to client chat')
+          }
+        }
+
         return new Response(
           JSON.stringify({ routed: 'approve-order', ticket_code: ticketCode, ...approveResult }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
