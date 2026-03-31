@@ -102,14 +102,51 @@ Deno.serve(async (req) => {
 
     // ── GUARDAR EN HISTORIAL CRM (aditivo, nunca bloquea) ──
     try {
-      const chatSb = createClient(Deno.env.get('SUPABASE_URL'), Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'))
+      const chatSb = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+      let permanentMediaUrl: string | null = null
+
+      // Si hay adjunto (imagen), descargar de URL temporal y subir a nuestro Storage
+      const attachment = body.data?.attachment
+      if (attachment && attachment.length > 0) {
+        const tempUrl = attachment[0].urltemp || attachment[0].url
+        if (tempUrl) {
+          try {
+            const mediaResp = await fetch(tempUrl)
+            if (mediaResp.ok) {
+              const blob = await mediaResp.blob()
+              const ext = attachment[0].type === 'image' ? 'jpg'
+                        : attachment[0].type === 'video' ? 'mp4'
+                        : attachment[0].type === 'audio' ? 'ogg'
+                        : 'bin'
+              const fileName = `chat-media/${clientPhone}/${Date.now()}.${ext}`
+              await chatSb.storage.from('photos').upload(fileName, blob, {
+                contentType: blob.type || 'image/jpeg',
+                cacheControl: '31536000',
+                upsert: true
+              })
+              const { data: urlData } = chatSb.storage.from('photos').getPublicUrl(fileName)
+              permanentMediaUrl = urlData.publicUrl
+            }
+          } catch (_dlErr) {
+            // Si falla la descarga, guardamos la URL temporal como fallback
+            permanentMediaUrl = tempUrl
+          }
+        }
+      }
+
+      // Limpiar body: si el mensaje es solo un ID de media interno, dejarlo vacío
+      let cleanBody = rawMessage || null
+      if (cleanBody && cleanBody.startsWith('_event_media_')) {
+        cleanBody = permanentMediaUrl ? '📷 Imagen' : cleanBody
+      }
+
       await chatSb.from('chat_messages').insert({
         phone: clientPhone || 'unknown',
         name: clientName || null,
         direction: body.eventName === 'message.incoming' ? 'incoming' : 'outgoing',
-        body: rawMessage || null,
-        media_url: body.data?.attachment?.[0]?.url || body.data?.attachment?.[0]?.urltemp || null,
-        attachment: body.data?.attachment?.length ? body.data.attachment : null,
+        body: cleanBody,
+        media_url: permanentMediaUrl,
+        attachment: attachment?.length ? attachment : null,
       })
     } catch (_chatErr) { /* silently continue — CRM history is non-critical */ }
 

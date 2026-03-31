@@ -3,8 +3,9 @@ import { createClient } from '@supabase/supabase-js'
 import {
   Upload, FolderPlus, Image, Check, AlertCircle,
   Loader2, X, LogOut, Plus, ChevronRight, Camera, Trash2, ArrowLeft,
-  ShoppingCart, Send, BarChart3, AlertTriangle, TrendingUp, Bug, Menu
+  ShoppingCart, Send, BarChart3, AlertTriangle, TrendingUp, Bug, Menu, MessageCircle
 } from 'lucide-react'
+import CRMChat from './CRMPage'
 import './PhotographerPanel.css'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
@@ -621,6 +622,9 @@ const PhotographerPanel = () => {
             <button className={`tab-btn ${dashboardTab === 'errors' ? 'active' : ''}`} onClick={() => { setDashboardTab('errors'); setIsSidebarOpen(false) }}>
               <Bug size={18} /> Errores
             </button>
+            <button className={`tab-btn ${dashboardTab === 'chat' ? 'active' : ''}`} onClick={() => { setDashboardTab('chat'); setIsSidebarOpen(false) }}>
+              <MessageCircle size={18} /> Chat CRM
+            </button>
           </div>
           <div className="sidebar-footer">
             <button className="btn-logout-sidebar" onClick={handleLogout} aria-label="Cerrar sesión">
@@ -839,6 +843,12 @@ const PhotographerPanel = () => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {dashboardTab === 'chat' && (
+            <div style={{ width: '100%', height: 'calc(100vh - 48px)' }}>
+              <CRMChat />
             </div>
           )}
         </main>
@@ -1143,6 +1153,7 @@ const PhotographerPanel = () => {
             )}
           </div>
         )}
+
       </main>
     </div>
   )
