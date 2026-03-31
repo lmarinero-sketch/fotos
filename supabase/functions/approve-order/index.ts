@@ -1,8 +1,8 @@
 // Supabase Edge Function: approve-order
 // Triggered by photographer saying "Todo ok PD-XXXXXX"
 // 1. Marks order as approved
-// 2. Searches photos in Supabase Storage bucket "photos"
-// 3. Sends photos directly via WhatsApp in batches to avoid blocks
+// 2. Searches photos in Supabase Storage bucket "photos" and maps URLs
+// 3. Sends ONLY the gallery link via WhatsApp (no photo flooding)
 // 4. Notifies photographer when complete
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
@@ -41,18 +41,6 @@ const sendWhatsAppMessage = async (phone, content, mediaUrl = null) => {
   return res.ok
 }
 
-// ── Delay helper ──
-const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
-// ── Batch config (anti-bloqueo WhatsApp) ──
-const getBatchConfig = (totalPhotos) => {
-  if (totalPhotos <= 5) return { batchSize: 5, delayBetween: 3000, batchPause: 0 }
-  if (totalPhotos <= 10) return { batchSize: 10, delayBetween: 4000, batchPause: 0 }
-  if (totalPhotos <= 20) return { batchSize: 10, delayBetween: 4000, batchPause: 60000 }
-  if (totalPhotos <= 30) return { batchSize: 10, delayBetween: 4000, batchPause: 90000 }
-  return { batchSize: 10, delayBetween: 5000, batchPause: 120000 }
-}
-
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -88,26 +76,19 @@ Deno.serve(async (req) => {
       )
     }
 
-    // ── 2. Update status ──
-    await supabase
-      .from('orders')
-      .update({ status: 'sending', approved_at: new Date().toISOString() })
-      .eq('id', order.id)
-
-    // ── 3. Get photos from DB ──
+    // ── 2. Get photos from DB ──
     const { data: photos } = await supabase
       .from('order_photos')
       .select('*')
       .eq('order_id', order.id)
       .order('created_at', { ascending: true })
 
-    let photosToSend = photos || []
+    let photosToProcess = photos || []
 
-    // ── 4. If photos don't have storage URLs yet, search in Supabase Storage ──
-    const needsSearch = photosToSend.some(p => !p.storage_url)
+    // ── 3. If photos don't have storage URLs yet, search in Supabase Storage ──
+    const needsSearch = photosToProcess.some(p => !p.storage_url)
 
     if (needsSearch) {
-      // Sanitize event name to match storage folder (same logic as panel)
       const { data: eventData, error: eventError } = await supabase
         .from('events')
         .select('slug')
@@ -121,7 +102,7 @@ Deno.serve(async (req) => {
       
       const folderPath = `events/${eventData.slug}`
 
-      for (const photo of photosToSend) {
+      for (const photo of photosToProcess) {
         if (photo.storage_url) continue;
 
         const searchTerm = photo.photo_name.toLowerCase().replace(/\.[^.]+$/, '');
@@ -155,10 +136,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Filter to photos we can actually send
-    const sendablePhotos = photosToSend.filter(p => p.storage_url)
-    const missingPhotos = photosToSend.filter(p => !p.storage_url)
-    const totalPhotos = sendablePhotos.length
+    // Check how many photos were resolved
+    const resolvedPhotos = photosToProcess.filter(p => p.storage_url)
+    const missingPhotos = photosToProcess.filter(p => !p.storage_url)
+    const totalPhotos = resolvedPhotos.length
 
     if (totalPhotos === 0) {
       // None found — notify client and photographer
@@ -181,79 +162,19 @@ Deno.serve(async (req) => {
       )
     }
 
-    // ── 5. Notify about missing photos (if some found, some not) ──
+    // ── 4. Notify about missing photos (if some found, some not) ──
     if (missingPhotos.length > 0) {
       const missingList = missingPhotos.map(p => `• ${p.photo_name}`).join('\n')
-      await sendWhatsAppMessage(
-        order.client_phone,
-        `⚠️ Algunas fotos no se encontraron en nuestra base de datos:\n\n` +
-        `${missingList}\n\n` +
-        `En breve un asesor te va a contactar para solucionarlo.\n` +
-        `Mientras tanto, te enviamos las ${totalPhotos} que sí encontramos 👇`
-      )
       await sendWhatsAppMessage(
         order.photographer_phone || Deno.env.get('PHOTOGRAPHER_PHONE'),
         `⚠️ Pedido ${ticket_code}: Fotos parcialmente encontradas.\n` +
         `✅ Encontradas: ${totalPhotos}\n❌ No encontradas:\n${missingList}`
       )
-      await delay(2000)
     }
 
-    // ── 6. Send intro message ──
+    // ── 5. Send ONLY the gallery link (no photo flooding) ──
     await sendWhatsAppMessage(
       order.client_phone,
-      `📸 ¡Tus fotos de "${order.event_name}" están listas!\n\nTe envío ${totalPhotos} foto${totalPhotos > 1 ? 's' : ''} a continuación ⬇️`
-    )
-    await delay(2000)
-
-    // ── 6. Send photos in batches ──
-    const config = getBatchConfig(totalPhotos)
-    let sentCount = 0
-    const totalBatches = Math.ceil(totalPhotos / config.batchSize)
-
-    for (let i = 0; i < totalPhotos; i += config.batchSize) {
-      const batch = sendablePhotos.slice(i, i + config.batchSize)
-      const batchEnd = Math.min(i + config.batchSize, totalPhotos)
-
-      // Progress message for multi-batch
-      if (totalBatches > 1) {
-        await sendWhatsAppMessage(
-          order.client_phone,
-          `📸 Enviando fotos (${i + 1}-${batchEnd} de ${totalPhotos})...`
-        )
-        await delay(1500)
-      }
-
-      // Send each photo
-      for (const photo of batch) {
-        const sent = await sendWhatsAppMessage(
-          order.client_phone,
-          `📷 ${photo.photo_name}`,
-          photo.storage_url
-        )
-
-        if (sent) {
-          sentCount++
-          await supabase
-            .from('order_photos')
-            .update({ sent_via_whatsapp: true })
-            .eq('id', photo.id)
-        }
-
-        await delay(config.delayBetween)
-      }
-
-      // Pause between batches
-      if (i + config.batchSize < totalPhotos && config.batchPause > 0) {
-        await delay(config.batchPause)
-      }
-    }
-
-    // ── 7. Completion ──
-    await delay(2000)
-    await sendWhatsAppMessage(
-      order.client_phone,
-      `✅ ¡Listo! Te envié ${sentCount} foto${sentCount > 1 ? 's' : ''} por acá para que las tengas a mano.\n\n` +
       `📥 *PARA NO PERDER CALIDAD:*\n` +
       `Descargalas en su resolución original (HD sin la compresión de WhatsApp) desde tu galería privada:\n\n` +
       `👉 https://jerpro.vercel.app/${ticket_code}\n\n` +
@@ -261,30 +182,34 @@ Deno.serve(async (req) => {
       `Automatización hecha por Grow Labs, visitanos en www.growlabs.lat`
     )
 
-    // ── 8. Update status ──
+    // ── 6. Update status to delivered ──
     await supabase
       .from('orders')
       .update({
         status: 'delivered',
         whatsapp_sent: true,
-        download_count: sentCount,
+        download_count: totalPhotos,
+        approved_at: new Date().toISOString(),
         delivered_at: new Date().toISOString(),
       })
       .eq('id', order.id)
 
-    // ── 9. Notify photographer ──
+    // ── 7. Notify photographer ──
     await sendWhatsAppMessage(
       order.photographer_phone || Deno.env.get('PHOTOGRAPHER_PHONE'),
-      `✅ Pedido ${ticket_code} entregado\n${sentCount}/${totalPhotos} fotos enviadas\nEvento: ${order.event_name}`
+      `✅ Pedido ${ticket_code} entregado\n` +
+      `${totalPhotos} fotos disponibles en la galería\n` +
+      `Evento: ${order.event_name}\n\n` +
+      `Link enviado al cliente: https://jerpro.vercel.app/${ticket_code}`
     )
 
     return new Response(
       JSON.stringify({
         success: true,
         ticket_code,
-        photos_sent: sentCount,
-        photos_total: totalPhotos,
-        batches_used: totalBatches,
+        photos_resolved: totalPhotos,
+        missing_photos: missingPhotos.length,
+        delivery_method: 'gallery_link_only',
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

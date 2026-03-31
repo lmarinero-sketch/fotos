@@ -69,7 +69,7 @@ const GalleryPage = () => {
         setOrder({
           id: orderData.ticket_code,
           eventName: orderData.event_name,
-          status: (orderData.status === 'awaiting_payment' || orderData.status === 'pending') ? 'pending' : 'approved',
+          status: ['awaiting_payment', 'pending', 'payment_received'].includes(orderData.status) ? 'pending' : 'approved',
           photos: orderPhotos
         })
       }
