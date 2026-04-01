@@ -27,7 +27,7 @@
 }
 .qo-aura-1 {
   width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(0,255,136,0.08), transparent 70%);
+  background: radial-gradient(circle, rgba(0,229,255,0.08), transparent 70%);
   top: -15%; right: -20%;
 }
 .qo-aura-2 {
@@ -52,16 +52,10 @@
   margin-bottom: 2rem;
 }
 
-.qo-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px; height: 48px;
-  border-radius: 14px;
-  background: rgba(0,255,136,0.1);
-  border: 1px solid rgba(0,255,136,0.2);
-  color: #00FF88;
+.qo-logo-img {
+  height: 48px;
   margin-bottom: 0.75rem;
+  filter: drop-shadow(0 0 16px rgba(0, 229, 255, 0.3));
 }
 
 .qo-title {
@@ -119,9 +113,9 @@
 }
 
 .qo-textarea:focus {
-  border-color: rgba(0,255,136,0.3);
-  box-shadow: 0 0 0 4px rgba(0,255,136,0.04),
-              0 0 30px rgba(0,255,136,0.03);
+  border-color: rgba(0,229,255,0.3);
+  box-shadow: 0 0 0 4px rgba(0,229,255,0.04),
+              0 0 30px rgba(0,229,255,0.03);
 }
 
 .qo-placeholder-hint {
@@ -175,9 +169,9 @@
   font-size: 0.8rem;
 }
 .qo-btn-paste:hover {
-  border-color: rgba(0,255,136,0.2) !important;
-  color: #00FF88;
-  background: rgba(0,255,136,0.03);
+  border-color: rgba(0,229,255,0.2) !important;
+  color: #00E5FF;
+  background: rgba(0,229,255,0.03);
 }
 .qo-btn-paste:active {
   transform: scale(0.98);
@@ -185,18 +179,18 @@
 
 .qo-btn-primary {
   padding: 0.9rem 1.5rem;
-  background: #00FF88;
+  background: #00E5FF;
   border-radius: 14px;
   color: #000;
   font-size: 0.9rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  box-shadow: 0 0 40px rgba(0,255,136,0.15),
+  box-shadow: 0 0 40px rgba(0,229,255,0.15),
               0 4px 12px rgba(0,0,0,0.3);
 }
 .qo-btn-primary:hover:not(:disabled) {
-  box-shadow: 0 0 60px rgba(0,255,136,0.25),
+  box-shadow: 0 0 60px rgba(0,229,255,0.25),
               0 4px 20px rgba(0,0,0,0.4);
   transform: translateY(-2px);
 }
@@ -290,12 +284,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0,255,136,0.04);
-  border-color: rgba(0,255,136,0.15);
+  background: rgba(0,229,255,0.04);
+  border-color: rgba(0,229,255,0.15);
 }
 
 .qo-card-badge {
-  color: #00FF88;
+  color: #00E5FF;
   font-weight: 800;
   font-size: 0.8rem;
   letter-spacing: 0.06em;

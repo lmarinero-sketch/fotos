@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { ClipboardCopy, Check, AlertTriangle, Loader2, ArrowLeft, Zap, Clipboard } from 'lucide-react'
+import { ClipboardCopy, Check, AlertTriangle, Loader2, ArrowLeft, Clipboard } from 'lucide-react'
 import './QuickOrderPage.css'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
@@ -212,9 +212,7 @@ const QuickOrderPage = () => {
       <div className="qo-container">
         {/* Header */}
         <header className="qo-header">
-          <div className="qo-logo">
-            <Zap size={24} />
-          </div>
+          <img src="/logo_creadores_jerpro.png" alt="JERPRO" className="qo-logo-img" />
           <h1 className="qo-title">Pedido Rápido</h1>
           <p className="qo-subtitle">Pegá el mensaje · Obtené el link</p>
         </header>
@@ -257,7 +255,7 @@ const QuickOrderPage = () => {
               {processing ? (
                 <><Loader2 size={18} className="qo-spin" /> Procesando...</>
               ) : (
-                <><Zap size={18} /> Procesar Pedido</>
+                <>🚀 Procesar Pedido</>
               )}
             </button>
 
