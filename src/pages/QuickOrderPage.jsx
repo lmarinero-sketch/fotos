@@ -155,26 +155,10 @@ const QuickOrderPage = () => {
       const paymentHolder = import.meta.env.VITE_PAYMENT_HOLDER || ''
 
       const formatPrice = (n) => Number(n).toLocaleString('es-AR')
-      const totalPrice = data.total_price || 0
-      const pricePerPhoto = data.price_per_photo || 0
-      const pricePack = data.price_pack || 0
-
       const copyText = 
         `¡Perfecto! Ya tomamos tu pedido 📸\n\n` +
-        `📋 *Pedido: ${ticketCode}*\n` +
-        `🎪 Evento: ${eventName}\n` +
-        `📷 Fotos: ${photos.length}\n\n` +
-        `💰 *Total a transferir: $${formatPrice(totalPrice)}*\n` +
-        `👉 Individual: $${formatPrice(pricePerPhoto)} c/u\n` +
-        `🎁 Pack completo: $${formatPrice(pricePack)}\n\n` +
-        `💳 *Datos para transferir:*\n` +
-        `CBU: ${paymentCBU}\n` +
-        `Alias: ${paymentAlias}\n` +
-        `Banco: ${paymentBanco}\n` +
-        `Titular: ${paymentHolder}\n\n` +
-        (missingCount > 0 ? `⚠️ ${missingCount} foto(s) no encontradas en el storage.\n\n` : '') +
-        `📥 *Galería de descarga:*\n${galleryLink}\n\n` +
-        `Una vez que hagas la transferencia, enviá el comprobante. ¡Y ya seguimos! 😊`
+        (missingCount > 0 ? `⚠️ ${missingCount} foto(s) no encontradas en storage.\n\n` : '') +
+        `📥 *Galería de descarga:*\n${galleryLink}`
 
       setResult({
         ticketCode,
