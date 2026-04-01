@@ -4,6 +4,7 @@ import LandingPage from './pages/LandingPage'
 import GalleryPage from './pages/GalleryPage'
 import PhotographerPanel from './pages/PhotographerPanel'
 import SearchPage from './pages/SearchPage'
+import QuickOrderPage from './pages/QuickOrderPage'
 import './App.css'
 
 // Wrapper that checks if the ticketCode looks like a real ticket (PD-XXXX)
@@ -20,7 +21,8 @@ const App = () => {
   return (
     <div className="app">
       <Routes>
-        {/* Ruta PÚBLICA — galerías de descarga (no requieren auth) */}
+        {/* Rutas PÚBLICAS */}
+        <Route path="/solucionmomentanea" element={<QuickOrderPage />} />
         <Route path="/:ticketCode" element={<GalleryOrRedirect />} />
 
         {/* Rutas PROTEGIDAS — requieren login */}
