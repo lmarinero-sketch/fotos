@@ -8,7 +8,14 @@
 /* ── Page ── */
 .qo-page {
   min-height: 100dvh;
-  background: #000;
+  background-color: #000;
+  background-image: 
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.98)),
+    linear-gradient(to right, rgba(0, 229, 255, 0.15), rgba(0, 229, 255, 0.05)),
+    url('/AND_0049.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   display: flex;
   justify-content: center;
   padding: 1rem;
