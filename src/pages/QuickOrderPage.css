@@ -1,9 +1,7 @@
 /* ============================================
-   QuickOrderPage — GrowLabs Ultra-Dark
-   Mobile-first rapid order processing
+   QuickOrderPage — JerPro Pedido Rápido
+   Mobile-first, optimized for speed
    ============================================ */
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 /* ── Page ── */
 .qo-page {
@@ -25,7 +23,7 @@
   background-image: 
     linear-gradient(to bottom, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.98)),
     linear-gradient(to right, rgba(0, 229, 255, 0.15), rgba(0, 229, 255, 0.05)),
-    url('/AND_0049.jpg');
+    url('/bg-hero.webp');
   background-size: cover;
   background-position: center;
   z-index: 0;

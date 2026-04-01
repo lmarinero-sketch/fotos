@@ -148,13 +148,8 @@ const QuickOrderPage = () => {
       const missingCount = approveData.missing_photos || 0
       const totalPhotos = approveData.photos_resolved || photos.length
 
-      // Datos de pago desde env
-      const paymentCBU = import.meta.env.VITE_PAYMENT_CBU || ''
-      const paymentAlias = import.meta.env.VITE_PAYMENT_ALIAS || ''
-      const paymentBanco = import.meta.env.VITE_PAYMENT_BANCO || ''
-      const paymentHolder = import.meta.env.VITE_PAYMENT_HOLDER || ''
 
-      const formatPrice = (n) => Number(n).toLocaleString('es-AR')
+
       const copyText = 
         `¡Perfecto! Ya tomamos tu pedido 📸\n\n` +
         (missingCount > 0 ? `⚠️ ${missingCount} foto(s) no encontradas en storage.\n\n` : '') +
