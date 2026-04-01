@@ -167,7 +167,7 @@ const QuickOrderPage = () => {
         totalPhotos,
         missingCount,
         galleryLink,
-        totalPrice,
+        totalPrice: data.total_price || 0,
         copyText,
         isDuplicate: false,
         messageSent: approveData.message_sent || false,
