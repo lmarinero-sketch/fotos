@@ -1,15 +1,10 @@
 import { useState, useRef } from 'react'
-import { createClient } from '@supabase/supabase-js'
-import { ClipboardCopy, Check, AlertTriangle, Loader2, ArrowLeft, Camera } from 'lucide-react'
+import { ClipboardCopy, Check, AlertTriangle, Loader2, ArrowLeft, Zap, Clipboard } from 'lucide-react'
 import './QuickOrderPage.css'
 
-// Admin client con service_role para crear orders
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_SERVICE_KEY
-)
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL
 
-// Replicar lógica de parseo del process-order
+// ── Parse the misfotos.click message ──
 const parseMessage = (raw) => {
   const cleanMsg = raw.replace(/\*/g, '').trim()
   const lines = cleanMsg.split('\n').map(l => l.trim()).filter(l => l.length > 0)
@@ -38,18 +33,15 @@ const parseMessage = (raw) => {
   return { eventName, photos }
 }
 
-const generateTicketCode = () => {
-  const num = Math.floor(1000 + Math.random() * 9000)
-  return `PD-${num}`
-}
-
 const QuickOrderPage = () => {
   const [message, setMessage] = useState('')
   const [processing, setProcessing] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [copiedLink, setCopiedLink] = useState(false)
   const textareaRef = useRef(null)
+  const lastProcessTime = useRef(0)
 
   const handlePaste = async () => {
     try {
@@ -58,7 +50,6 @@ const QuickOrderPage = () => {
       setError('')
       setResult(null)
     } catch {
-      // Fallback: focus the textarea for manual paste
       textareaRef.current?.focus()
     }
   }
@@ -69,172 +60,133 @@ const QuickOrderPage = () => {
       return
     }
 
+    // Anti-spam: 3 seconds cooldown
+    const now = Date.now()
+    if (now - lastProcessTime.current < 3000) {
+      setError('Esperá unos segundos antes de procesar otro pedido')
+      return
+    }
+    lastProcessTime.current = now
+
     setProcessing(true)
     setError('')
     setResult(null)
 
     try {
+      // Preview del parseo antes de enviar
       const { eventName, photos } = parseMessage(message)
 
       if (!eventName || photos.length === 0) {
-        setError(`No se pudo parsear el mensaje.\nEvento detectado: "${eventName || 'ninguno'}"\nFotos detectadas: ${photos.length}`)
+        setError(`No se pudo parsear el mensaje.\nEvento: "${eventName || '—'}"\nFotos: ${photos.length}`)
         setProcessing(false)
         return
       }
 
-      // Buscar evento en DB para obtener precios
-      const { data: eventData } = await supabase
-        .from('events')
-        .select('price_per_photo, price_pack')
-        .ilike('name', eventName)
-        .limit(1)
-        .single()
-
-      const pricePerPhoto = eventData?.price_per_photo || 3000
-      const pricePack = eventData?.price_pack || 15000
-      const costIndividual = photos.length * pricePerPhoto
-      const totalPrice = costIndividual > pricePack ? pricePack : costIndividual
-
-      // ── Anti-duplicado: buscar si ya existe un pedido reciente con el mismo evento + mismas fotos ──
-      const fiveMinAgo = new Date(Date.now() - 5 * 60000).toISOString()
-      const { data: recentOrders } = await supabase
-        .from('orders')
-        .select('id, ticket_code, order_photos(photo_name)')
-        .ilike('event_name', eventName)
-        .gte('created_at', fiveMinAgo)
-        .order('created_at', { ascending: false })
-        .limit(5)
-
-      // Verificar si alguno tiene exactamente las mismas fotos
-      if (recentOrders && recentOrders.length > 0) {
-        for (const existing of recentOrders) {
-          const existingPhotos = (existing.order_photos || []).map(p => p.photo_name).sort()
-          const newPhotos = [...photos].sort()
-          if (JSON.stringify(existingPhotos) === JSON.stringify(newPhotos)) {
-            // Ya existe este pedido exacto
-            const galleryLink = `https://jerpro.vercel.app/${existing.ticket_code}`
-            const formatPrice = (n) => n.toLocaleString('es-AR')
-            setResult({
-              ticketCode: existing.ticket_code,
-              eventName,
-              photos,
-              foundPhotos: photos,
-              missingPhotos: [],
-              galleryLink,
-              totalPrice: costIndividual > pricePack ? pricePack : costIndividual,
-              pricePerPhoto,
-              pricePack,
-              isDuplicate: true,
-              copyText: 
-                `📸 *Pedido: ${existing.ticket_code}* (existente)\n` +
-                `🎪 Evento: ${eventName}\n` +
-                `📷 Fotos: ${photos.length}\n\n` +
-                `💰 *Total: $${formatPrice(costIndividual > pricePack ? pricePack : costIndividual)}*\n\n` +
-                `📥 *Galería de descarga:*\n${galleryLink}`,
-            })
-            setProcessing(false)
-            return
+      // Llamar a process-order con un webhook simulado
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/process-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'message.incoming',
+          data: {
+            body: message,
+            from: `web-quick-${Date.now()}`,
+            name: 'Pedido Rápido Web',
           }
-        }
-      }
-
-      const ticketCode = generateTicketCode()
-
-      // Crear orden
-      const { data: order, error: orderErr } = await supabase
-        .from('orders')
-        .insert({
-          ticket_code: ticketCode,
-          event_name: eventName,
-          client_phone: 'web-quickorder',
-          client_name: 'Web Quick Order',
-          status: 'awaiting_payment',
-          total_price: totalPrice,
-        })
-        .select()
-        .single()
-
-      if (orderErr) throw orderErr
-
-      // Insertar fotos del pedido
-      const photoRecords = photos.map(photoName => ({
-        order_id: order.id,
-        photo_name: photoName,
-      }))
-      await supabase.from('order_photos').insert(photoRecords)
-
-      // Verificar qué fotos existen en storage
-      const folderPath = eventName + '/'
-      const { data: storageFiles } = await supabase.storage.from('photos').list(folderPath, {
-        limit: 5000,
-        sortBy: { column: 'name', order: 'asc' }
+        }),
       })
 
-      const existingFiles = (storageFiles || []).map(f => f.name.split('.')[0].toLowerCase())
+      const data = await res.json()
       
-      const foundPhotos = []
-      const missingPhotos = []
-
-      for (const photo of photos) {
-        const photoBase = photo.toLowerCase()
-        if (existingFiles.some(f => f === photoBase || f.includes(photoBase))) {
-          foundPhotos.push(photo)
-        } else {
-          missingPhotos.push(photo)
-        }
+      if (data.skip && data.reason === 'Duplicate order detected') {
+        // Pedido duplicado: usar el ticket existente
+        const galleryLink = `https://jerpro.vercel.app/${data.existing_ticket}`
+        setResult({
+          ticketCode: data.existing_ticket,
+          eventName,
+          photos,
+          missingPhotos: [],
+          galleryLink,
+          isDuplicate: true,
+          copyText: `📥 *Galería:*\n${galleryLink}`,
+        })
+        setProcessing(false)
+        return
       }
 
-      // Llamar a approve-order para resolver las fotos y marcar como delivered
+      if (data.error) {
+        setError(`Error del servidor: ${data.error}`)
+        setProcessing(false)
+        return
+      }
+
+      // Extraer ticket_code de la respuesta
+      const ticketCode = data.ticket_code || data.order?.ticket_code
+      if (!ticketCode) {
+        setError('No se pudo obtener el código del pedido')
+        setProcessing(false)
+        return
+      }
+
+      // Ahora llamar approve-order para resolver las fotos
+      let approveData = {}
       try {
-        const approveRes = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/approve-order`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_SERVICE_KEY}`,
-            },
-            body: JSON.stringify({
-              ticket_code: ticketCode,
-              photographer_phone: 'web-quickorder',
-            }),
-          }
-        )
-        const approveData = await approveRes.json()
-        console.log('Approve result:', approveData)
-      } catch (approveErr) {
-        console.warn('Approve failed (photos may not be ready):', approveErr)
+        const approveRes = await fetch(`${SUPABASE_URL}/functions/v1/approve-order`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ticket_code: ticketCode,
+            photographer_phone: 'web-quickorder',
+          }),
+        })
+        approveData = await approveRes.json()
+      } catch (_) {
+        console.warn('Approve failed silently')
       }
 
       const galleryLink = `https://jerpro.vercel.app/${ticketCode}`
-      const formatPrice = (n) => n.toLocaleString('es-AR')
+      const missingCount = approveData.missing_photos || 0
+      const totalPhotos = approveData.photos_resolved || photos.length
+
+      // Datos de pago desde env
+      const paymentCBU = import.meta.env.VITE_PAYMENT_CBU || ''
+      const paymentAlias = import.meta.env.VITE_PAYMENT_ALIAS || ''
+      const paymentBanco = import.meta.env.VITE_PAYMENT_BANCO || ''
+      const paymentHolder = import.meta.env.VITE_PAYMENT_HOLDER || ''
+
+      const formatPrice = (n) => Number(n).toLocaleString('es-AR')
+      const totalPrice = data.total_price || 0
+      const pricePerPhoto = data.price_per_photo || 0
+      const pricePack = data.price_pack || 0
+
+      const copyText = 
+        `¡Perfecto! Ya tomamos tu pedido 📸\n\n` +
+        `📋 *Pedido: ${ticketCode}*\n` +
+        `🎪 Evento: ${eventName}\n` +
+        `📷 Fotos: ${photos.length}\n\n` +
+        `💰 *Total a transferir: $${formatPrice(totalPrice)}*\n` +
+        `👉 Individual: $${formatPrice(pricePerPhoto)} c/u\n` +
+        `🎁 Pack completo: $${formatPrice(pricePack)}\n\n` +
+        `💳 *Datos para transferir:*\n` +
+        `CBU: ${paymentCBU}\n` +
+        `Alias: ${paymentAlias}\n` +
+        `Banco: ${paymentBanco}\n` +
+        `Titular: ${paymentHolder}\n\n` +
+        (missingCount > 0 ? `⚠️ ${missingCount} foto(s) no encontradas en el storage.\n\n` : '') +
+        `📥 *Galería de descarga:*\n${galleryLink}\n\n` +
+        `Una vez que hagas la transferencia, enviá el comprobante. ¡Y ya seguimos! 😊`
 
       setResult({
         ticketCode,
         eventName,
         photos,
-        foundPhotos,
-        missingPhotos,
+        totalPhotos,
+        missingCount,
         galleryLink,
         totalPrice,
-        pricePerPhoto,
-        pricePack,
-        // Mensaje listo para copiar
-        copyText: 
-          `📸 *Pedido: ${ticketCode}*\n` +
-          `🎪 Evento: ${eventName}\n` +
-          `📷 Fotos: ${photos.length}\n\n` +
-          `💰 *Total: $${formatPrice(totalPrice)}*\n` +
-          `👉 Individual: $${formatPrice(pricePerPhoto)} c/u\n` +
-          `🎁 Pack completo: $${formatPrice(pricePack)}\n\n` +
-          `💳 *Datos para transferir:*\n` +
-          `CBU: ${import.meta.env.VITE_PAYMENT_CBU}\n` +
-          `Alias: ${import.meta.env.VITE_PAYMENT_ALIAS}\n` +
-          `Banco: ${import.meta.env.VITE_PAYMENT_BANCO}\n` +
-          `Titular: ${import.meta.env.VITE_PAYMENT_HOLDER}\n\n` +
-          (missingPhotos.length > 0 ? `⚠️ Fotos no encontradas: ${missingPhotos.join(', ')}\n\n` : '') +
-          `📥 *Galería de descarga:*\n${galleryLink}\n\n` +
-          `Una vez que hagas la transferencia, enviá el comprobante. ¡Y ya seguimos! 😊`,
+        copyText,
+        isDuplicate: false,
+        messageSent: approveData.message_sent || false,
       })
 
     } catch (err) {
@@ -244,28 +196,19 @@ const QuickOrderPage = () => {
     }
   }
 
-  const handleCopy = async () => {
-    if (!result) return
+  const handleCopy = async (text, setter) => {
     try {
-      await navigator.clipboard.writeText(result.copyText)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      await navigator.clipboard.writeText(text)
     } catch {
-      // Fallback
       const ta = document.createElement('textarea')
-      ta.value = result.copyText
+      ta.value = text
       document.body.appendChild(ta)
       ta.select()
       document.execCommand('copy')
       document.body.removeChild(ta)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
     }
-  }
-
-  const handleCopyLink = async () => {
-    if (!result) return
-    await navigator.clipboard.writeText(result.galleryLink)
+    setter(true)
+    setTimeout(() => setter(false), 2000)
   }
 
   const handleReset = () => {
@@ -273,114 +216,165 @@ const QuickOrderPage = () => {
     setResult(null)
     setError('')
     setCopied(false)
+    setCopiedLink(false)
   }
 
   return (
     <div className="qo-page">
-      <div className="qo-bg-aura qo-bg-1" />
-      <div className="qo-bg-aura qo-bg-2" />
+      {/* Background auras */}
+      <div className="qo-aura qo-aura-1" />
+      <div className="qo-aura qo-aura-2" />
 
       <div className="qo-container">
+        {/* Header */}
         <header className="qo-header">
-          <Camera size={28} className="qo-icon" />
-          <h1>JerPro — Pedido Rápido</h1>
-          <p>Pegá el mensaje del cliente y obtené el link al instante</p>
+          <div className="qo-logo">
+            <Zap size={24} />
+          </div>
+          <h1 className="qo-title">Pedido Rápido</h1>
+          <p className="qo-subtitle">Pegá el mensaje · Obtené el link</p>
         </header>
 
         {!result ? (
           <div className="qo-form">
-            <textarea
-              ref={textareaRef}
-              className="qo-textarea"
-              placeholder={'Pegá acá el mensaje del cliente...\n\nEjemplo:\nHola! Estoy en misfotos.click me interesan estas fotos:\n\n Ironman 70.3 San Juan:\n - JER_4907\n - COS02717\n\nSon en total:\n2 fotos.\nGracias!'}
-              value={message}
-              onChange={(e) => {
-                setMessage(e.target.value)
-                setError('')
-              }}
-              rows={10}
-            />
-
-            <div className="qo-actions">
-              <button className="qo-btn-paste" onClick={handlePaste}>
-                <ClipboardCopy size={18} />
-                Pegar desde portapapeles
-              </button>
-
-              <button 
-                className="qo-btn-process" 
-                onClick={handleProcess}
-                disabled={!message.trim() || processing}
-              >
-                {processing ? (
-                  <><Loader2 size={18} className="qo-spin" /> Procesando...</>
-                ) : (
-                  '🚀 Procesar Pedido'
-                )}
-              </button>
+            {/* Textarea */}
+            <div className="qo-input-wrap">
+              <textarea
+                ref={textareaRef}
+                className="qo-textarea"
+                placeholder="Pegá acá el mensaje del cliente..."
+                value={message}
+                onChange={(e) => { setMessage(e.target.value); setError('') }}
+                rows={8}
+                spellCheck={false}
+              />
+              {!message && (
+                <div className="qo-placeholder-hint">
+                  Formato esperado:<br/>
+                  Hola! Estoy en misfotos.click...<br/>
+                  Evento:<br/>
+                  - FOTO_001<br/>
+                  - FOTO_002
+                </div>
+              )}
             </div>
 
-            {error && <div className="qo-error"><AlertTriangle size={16} /> {error}</div>}
+            {/* Actions */}
+            <button className="qo-btn qo-btn-paste" onClick={handlePaste}>
+              <Clipboard size={16} />
+              <span>Pegar del portapapeles</span>
+            </button>
+
+            <button 
+              className="qo-btn qo-btn-primary" 
+              onClick={handleProcess}
+              disabled={!message.trim() || processing}
+            >
+              {processing ? (
+                <><Loader2 size={18} className="qo-spin" /> Procesando...</>
+              ) : (
+                <><Zap size={18} /> Procesar Pedido</>
+              )}
+            </button>
+
+            {/* Parse preview */}
+            {message.trim() && (() => {
+              const { eventName, photos } = parseMessage(message)
+              return (
+                <div className="qo-parse-preview">
+                  <span className={eventName ? 'qo-pp-ok' : 'qo-pp-err'}>
+                    {eventName ? `🎪 ${eventName}` : '⚠️ Sin evento'}
+                  </span>
+                  <span className={photos.length > 0 ? 'qo-pp-ok' : 'qo-pp-err'}>
+                    📷 {photos.length} foto{photos.length !== 1 ? 's' : ''}
+                  </span>
+                </div>
+              )
+            })()}
+
+            {error && (
+              <div className="qo-alert qo-alert-error">
+                <AlertTriangle size={15} />
+                <span>{error}</span>
+              </div>
+            )}
           </div>
         ) : (
+          /* ═══ RESULT ═══ */
           <div className="qo-result">
-            <div className="qo-result-header">
-              <span className="qo-badge-success">✅ PEDIDO CREADO</span>
-              <span className="qo-ticket">{result.ticketCode}</span>
-            </div>
-
-            <div className="qo-result-info">
-              <div className="qo-info-row">
-                <span>🎪 Evento</span>
-                <strong>{result.eventName}</strong>
-              </div>
-              <div className="qo-info-row">
-                <span>📷 Fotos</span>
-                <strong>{result.photos.length}</strong>
-              </div>
-              <div className="qo-info-row">
-                <span>💰 Total</span>
-                <strong>${result.totalPrice.toLocaleString('es-AR')}</strong>
-              </div>
-            </div>
-
-            {result.missingPhotos.length > 0 && (
-              <div className="qo-warning">
-                <AlertTriangle size={16} />
-                <div>
-                  <strong>Fotos no encontradas ({result.missingPhotos.length}):</strong>
-                  <ul>
-                    {result.missingPhotos.map(p => <li key={p}>{p}</li>)}
-                  </ul>
-                </div>
+            {result.isDuplicate && (
+              <div className="qo-alert qo-alert-info">
+                ℹ️ Pedido existente recuperado
               </div>
             )}
 
-            <div className="qo-link-box">
-              <span className="qo-link-label">📥 Link de galería:</span>
-              <a href={result.galleryLink} target="_blank" rel="noopener" className="qo-link">
+            <div className="qo-card qo-card-success">
+              <div className="qo-card-badge">✅ CREADO</div>
+              <div className="qo-card-ticket">{result.ticketCode}</div>
+            </div>
+
+            <div className="qo-card qo-card-info">
+              <div className="qo-row">
+                <span className="qo-label">Evento</span>
+                <span className="qo-value">{result.eventName}</span>
+              </div>
+              <div className="qo-divider" />
+              <div className="qo-row">
+                <span className="qo-label">Fotos</span>
+                <span className="qo-value">{result.photos.length}</span>
+              </div>
+              {result.totalPrice > 0 && (
+                <>
+                  <div className="qo-divider" />
+                  <div className="qo-row">
+                    <span className="qo-label">Total</span>
+                    <span className="qo-value qo-value-price">${Number(result.totalPrice).toLocaleString('es-AR')}</span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {result.missingCount > 0 && (
+              <div className="qo-alert qo-alert-warn">
+                <AlertTriangle size={15} />
+                <span>{result.missingCount} foto(s) no encontradas en storage</span>
+              </div>
+            )}
+
+            {/* Gallery link */}
+            <div className="qo-card qo-card-link">
+              <span className="qo-link-label">Galería de descarga</span>
+              <a href={result.galleryLink} target="_blank" rel="noopener noreferrer" className="qo-gallery-link">
                 {result.galleryLink}
               </a>
-              <button className="qo-btn-copy-link" onClick={handleCopyLink}>
-                📋 Copiar link
+              <button 
+                className="qo-btn qo-btn-sm" 
+                onClick={() => handleCopy(result.galleryLink, setCopiedLink)}
+              >
+                {copiedLink ? <><Check size={14} /> Copiado</> : <><ClipboardCopy size={14} /> Copiar link</>}
               </button>
             </div>
 
-            <button className="qo-btn-copy-all" onClick={handleCopy}>
+            {/* Copy full message */}
+            <button 
+              className="qo-btn qo-btn-primary" 
+              onClick={() => handleCopy(result.copyText, setCopied)}
+            >
               {copied ? (
-                <><Check size={18} /> ¡Copiado!</>
+                <><Check size={18} /> ¡Mensaje copiado!</>
               ) : (
                 <><ClipboardCopy size={18} /> Copiar mensaje completo</>
               )}
             </button>
 
-            <div className="qo-preview">
-              <span className="qo-preview-label">Vista previa del mensaje:</span>
-              <pre className="qo-preview-text">{result.copyText}</pre>
-            </div>
+            {/* Preview */}
+            <details className="qo-details">
+              <summary>Ver mensaje completo</summary>
+              <pre className="qo-pre">{result.copyText}</pre>
+            </details>
 
-            <button className="qo-btn-reset" onClick={handleReset}>
-              <ArrowLeft size={16} /> Nuevo pedido
+            <button className="qo-btn qo-btn-ghost" onClick={handleReset}>
+              <ArrowLeft size={15} /> Nuevo pedido
             </button>
           </div>
         )}

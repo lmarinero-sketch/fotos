@@ -586,6 +586,8 @@ Deno.serve(async (req) => {
         event_name: eventName,
         photos_count: photos.length,
         total_price: totalPrice,
+        price_per_photo: pricePerPhoto,
+        price_pack: pricePack,
         photos,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
