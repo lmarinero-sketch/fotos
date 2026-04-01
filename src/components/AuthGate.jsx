@@ -62,6 +62,39 @@ const AuthGate = ({ children, requireAuth = true }) => {
         },
         spacing: { borderRadius: "16px", messageBorderRadius: "12px" }
       }))
+
+      // Auto-open on mobile after widget loads
+      script.onload = () => {
+        const isMobile = window.innerWidth <= 768
+        if (isMobile) {
+          // Wait for widget to render, then auto-click the chat button
+          setTimeout(() => {
+            const chatBtn = document.querySelector('.chat-button, .chat-widget-button')
+            if (chatBtn) chatBtn.click()
+          }, 1500)
+        }
+
+        // Email mapping: store user email linked to this session
+        // Save to Supabase so process-order can identify the user
+        const userEmail = session.user.email
+        const mappingKey = `bb_email_mapped_${userEmail}`
+        if (!localStorage.getItem(mappingKey)) {
+          // Store the mapping in Supabase for process-order to find
+          supabase.from('web_user_sessions').upsert({
+            user_email: userEmail,
+            user_id: session.user.id,
+            last_active: new Date().toISOString(),
+          }, { onConflict: 'user_email' }).then(() => {
+            localStorage.setItem(mappingKey, 'true')
+          })
+        } else {
+          // Update last_active
+          supabase.from('web_user_sessions').update({
+            last_active: new Date().toISOString(),
+          }).eq('user_email', userEmail)
+        }
+      }
+
       document.body.appendChild(script)
     }
 
@@ -71,8 +104,8 @@ const AuthGate = ({ children, requireAuth = true }) => {
         const existingScript = document.getElementById('builderbot-sdk')
         if (existingScript) existingScript.remove()
         // Remove the widget container too
-        const widget = document.querySelector('[data-builderbot-chat]')
-        if (widget) widget.remove()
+        const widgetElements = document.querySelectorAll('.chat-widget-container, .chat-button, .chat-widget-button')
+        widgetElements.forEach(el => el.remove())
       }
     }
   }, [session])

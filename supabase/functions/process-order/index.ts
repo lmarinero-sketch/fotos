@@ -257,9 +257,38 @@ Deno.serve(async (req) => {
         }
       }
 
+      // ── Email mapping: resolver email del usuario web ──
+      let userEmail = ''
+      if (clientPhone && clientPhone.length > 15) {
+        // Parece un session_id de web widget (no un teléfono)
+        // Primero vinculamos session_id con el email si aún no está mapeado
+        const { data: unmapped } = await chatSb
+          .from('web_user_sessions')
+          .select('user_email')
+          .is('bb_session_id', null)
+          .order('last_active', { ascending: false })
+          .limit(1)
+        
+        if (unmapped && unmapped.length > 0) {
+          await chatSb
+            .from('web_user_sessions')
+            .update({ bb_session_id: clientPhone })
+            .eq('user_email', unmapped[0].user_email)
+          userEmail = unmapped[0].user_email
+        } else {
+          // Ya mapeado: buscar email por session_id
+          const { data: mapped } = await chatSb
+            .from('web_user_sessions')
+            .select('user_email')
+            .eq('bb_session_id', clientPhone)
+            .single()
+          if (mapped) userEmail = mapped.user_email
+        }
+      }
+
       await chatSb.from('chat_messages').insert({
         phone: clientPhone,
-        name: clientName || null,
+        name: userEmail || clientName || null,
         direction: 'incoming',
         body: cleanBody,
         media_url: permanentMediaUrl,
